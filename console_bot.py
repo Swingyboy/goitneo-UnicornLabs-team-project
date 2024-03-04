@@ -1,15 +1,16 @@
 from typing import Tuple
 import sys
 
+from address_book import AddressBook, Record
 
-CONTACTS = {}
+CONTACTS = AddressBook()
 
 
 def input_error_handler(func):
     def inner(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except ValueError:
+        except ValueError as v_ex:
             if func.__name__ == "_add_contact":
                 return "Invalid number of arguments for add command, please try again. Give me name and phone please."
             elif func.__name__ == "_change_contact":
@@ -17,6 +18,13 @@ def input_error_handler(func):
                         " Give me name and phone please.")
             elif func.__name__ == "_get_phone":
                 return "Invalid number of arguments for phone command, please try again. Give me name please."
+            else:
+                return str(v_ex)
+        except IndexError as i_ex:
+            if func.__name__ == "_get_phone":
+                return "Invalid number of arguments for phone command, please try again. Give me name please."
+            else:
+                return str(i_ex)
     return inner
 
 
@@ -45,38 +53,43 @@ def _parse_input(user_input: str) -> Tuple[str, ...]:
 @input_error_handler
 def _add_contact(*args) -> str:
     name, phone = args
-    if name in CONTACTS:
+    if CONTACTS.find(name):
         change = input(f"Contact {name.capitalize()} already exists. Do you want to change it?")
         if change.lower() in ["yes", "y"]:
             return _change_contact(name, phone)
         else:
             _hello_bot()
     else:
-        CONTACTS[name] = phone
+        record = Record(name)
+        record.add_phone(phone)
+        CONTACTS.add_record(record)
         return f"Contact {name.capitalize()} has been added."
 
 
 @input_error_handler
 def _change_contact(*args) -> str:
     name, phone = args
-    if name not in CONTACTS:
-        return f"Contact {name.capitalize()} does not exist."
-    else:
-        CONTACTS[name] = phone
+    record = CONTACTS.find(name)
+    if record:
+        record.add_phone(phone)
         return f"Contact {name.capitalize()} has been updated."
+    else:
+        return f"Contact {name.capitalize()} does not exist."
 
 
 def _get_all() -> None:
-    for name, phone in CONTACTS.items():
-        print(f"{name.capitalize()}:\t {phone}")
+    for record in CONTACTS.get_all_records():
+        print(f"{record.name.value.capitalize()}:\t{', '.join(phone.value for phone in record.phones)}")
 
 
+@input_error_handler
 def _get_phone(*args) -> str:
     name = args[0]
-    if name not in CONTACTS:
+    record = CONTACTS.find(name)
+    if not record:
         return f"Contact {name.capitalize()} does not exist."
     else:
-        return f"{name.capitalize()}: {CONTACTS[name]}"
+        return f"{name.capitalize()}: {', '.join(phone.value for phone in record.phones)}"
 
 
 def _exit_bot() -> str:
@@ -105,6 +118,8 @@ def bot_event_loop():
         result = SUPPORTED_COMMANDS[command](*args)
         if result:
             print(result)
+            if command in ["exit", "close"]:
+                break
 
 
 def bot_main():
