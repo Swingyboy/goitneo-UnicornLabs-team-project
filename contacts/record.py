@@ -17,10 +17,14 @@ class Record:
     def add_phone(self, phone):
         self.phones.append(Phone(phone))
 
-    def edit_phone(self, old_p: str, new_p: str) -> None:
+    def edit_phone(self, old_p: str, new_p: str) -> bool:
+        if old_p not in self.phones:
+            return False
         for p in self.phones:
             if p.value == old_p:
                 p.value = new_p
+                return True
+        return False
 
     def find_phone(self, phone: str) -> Optional[Phone]:
         for p in self.phones:
