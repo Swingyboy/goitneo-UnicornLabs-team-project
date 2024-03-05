@@ -6,7 +6,11 @@ Welcome to the Assistant Bot project! This bot helps users manage their contacts
 
 - Add new contacts with their phone numbers
 - Change existing contact phone numbers
+- Remove phone numbers from existing contacts
+- Remove existing contacts
 - Retrieve phone numbers for specific contacts
+- Add birthday to the contacts
+- View upcoming birthdays
 - View all contacts and their phone numbers
 - Greet users and provide assistance
 
@@ -27,9 +31,18 @@ To use the Assistant Bot, follow these steps:
 Once the bot is running, you can enter commands to manage your contacts. Here are the supported commands:
 
  - **add** <name> <phone>: Add a new contact with the given name and phone number.
- - **change** <name> <phone>: Change the phone number of an existing contact.
- - **phone** <name>: Retrieve the phone number of a specific contact.
+ - **add-phone** <name> <phone>: Add a new phone number to the existing contact.
+ - **add-birthday** <name> <birthday>: Add a birthday in DD.MM.YYYY format to the existing contact.
  - **all**: View all contacts and their phone numbers.
- - **hello**: Greet the bot and get assistance.
+ - **birthdays**: View this week's upcoming birthdays.
+ - **delete** <name>: Remove the specific contact from the contact book.
+ - **change** <name> <old_phone> <new_phone>: Change the phone number of an existing contact to a new one.
  - **exit** or **close**: Exit the bot.
+ - **phone** <name>: Retrieve the phone numbers of a specific contact.
+ - **hello**: Greet the bot and get assistance.
+ - **show-birthday** <name>: Show the birthday of the existing contact.
+ - **remove** <name>: Remove the specific contact from the contact book.
+
+After stopping bot saves its current state to your home directory in the `.ConsoleBot` directory, `bot_data.json` file in JSON format. When the bot is started again, it will try to restore all data from this file.  
+
  
