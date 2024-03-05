@@ -4,6 +4,7 @@ import os
 from bot_constants import BOT_STATE_FILE
 from contacts import AddressBook
 
+
 def recall_bot_state(bot: "ConsoleBot"):
     if os.path.exists(BOT_STATE_FILE):
         with open(BOT_STATE_FILE, "r") as f:
