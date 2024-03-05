@@ -24,6 +24,20 @@ class AddressBook(UserDict):
     def get_all_records(self) -> List[Record]:
         return list(self.data.values())
 
+    def to_dict(self) -> List[Dict[str, ...]]:
+        res = []
+        for record in self.data.values():
+            res.append(record.to_dict())
+        return res
+
+    @classmethod
+    def from_dict(cls, data: List[Dict[str, ...]]) -> "AddressBook":
+        address_book = cls()
+        for record in data:
+            new_record = Record.from_dict(record)
+            address_book.add_record(new_record)
+        return address_book
+
     def get_birthdays_per_week(self) -> None:
         users_with_day_this_week = defaultdict(list)
         updated_users_list = self._get_users_birthday_in_current_year(self.data)
