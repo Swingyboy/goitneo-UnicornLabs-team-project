@@ -1,8 +1,8 @@
-from console_bot import ConsoleBot, DefaultCommandHandler
+from console_bot import ConsoleBot
 
 
 def main():
-    bot = ConsoleBot(DefaultCommandHandler)
+    bot = ConsoleBot()
     bot.run()
 
 
