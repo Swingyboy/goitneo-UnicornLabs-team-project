@@ -1,6 +1,7 @@
 from typing import Tuple
 import sys
 
+from bot_memmory import recall_bot_state, save_bot_state
 from contacts import AddressBook
 from commands_handler import DefaultCommandHandler
 
@@ -19,6 +20,7 @@ class ConsoleBot:
             if result:
                 print(result)
                 if command in ["exit", "close"]:
+                    save_bot_state(self)
                     break
 
     def event_loop_error_handler(self, func):
@@ -37,10 +39,14 @@ class ConsoleBot:
                         print(f" - {key}")
                 except KeyboardInterrupt:
                     print("\nGoodbye!")
+                    save_bot_state(self)
                     sys.exit(0)
         return inner
 
-    def run(self):
+    def run(self, recall_state=True):
+        if recall_state:
+            recall_bot_state(self)
+            self.handler.book = self.book
         event_loop = self.event_loop_error_handler(self.bot_event_loop)
         event_loop()
 
