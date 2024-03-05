@@ -1,4 +1,4 @@
-from contacts import AddressBook, Record
+from contacts import Record
 
 
 def input_error_handler(func):
@@ -28,6 +28,7 @@ class DefaultCommandHandler:
     def __init__(self, bot: "ConsoleBot") -> None:
         self.book = bot.book
         self.SUPPORTED_COMMANDS = {"add": self._add_contact,
+                                   "add-phone": self._add_phone,
                                    "add-birthday": self._add_birthday,
                                    "all": self._get_all,
                                    "change": self._change_contact,
@@ -53,6 +54,16 @@ class DefaultCommandHandler:
             record.add_phone(phone)
             self.book.add_record(record)
             return f"Contact {name.capitalize()} has been added."
+
+    @input_error_handler
+    def _add_phone(self, *args) -> str:
+        name, phone = args
+        record = self.book.find(name)
+        if record:
+            record.add_phone(phone)
+            return f"Phone number {phone} has been added to contact {name.capitalize()}."
+        else:
+            return f"Contact {name.capitalize()} does not exist."
 
     @input_error_handler
     def _change_contact(self, *args) -> str:
