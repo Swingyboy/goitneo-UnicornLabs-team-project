@@ -1,7 +1,7 @@
 from typing import Tuple
 import sys
 
-from address_book import AddressBook, Record
+from contacts import AddressBook, Record
 
 book = AddressBook()
 
