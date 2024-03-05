@@ -41,13 +41,15 @@ class DefaultCommandHandler:
                                    "add-phone": self._add_phone,
                                    "add-birthday": self._add_birthday,
                                    "all": self._get_all,
+                                   "birthdays": self._get_birthdays_per_week,
+                                   "delete": self._delete_contact,
                                    "change": self._change_contact,
                                    "close": self._exit_bot,
                                    "exit": self._exit_bot,
                                    "hello": self._hello_bot,
                                    "phone": self._get_phone,
                                    "show-birthday": self._show_birthday,
-                                   "birthdays": self._get_birthdays_per_week,
+                                   "remove": self._delete_contact
                                    }
 
     @input_error_handler
@@ -92,6 +94,13 @@ class DefaultCommandHandler:
             return f"Contact {name.capitalize()} does not exist."
         else:
             return record
+
+    def _delete_contact(self, *args) -> str:
+        name = args[0]
+        result = self.book.delete(name)
+        if result:
+            return f"Contact {name.capitalize()} has been deleted."
+        return f"Contact {name.capitalize()} does not exist."
 
     def _get_all(self) -> None:
         for record in self.book.get_all_records():
