@@ -32,5 +32,21 @@ class Record:
                 return p
         return None
 
+    def to_dict(self):
+        return {
+            "name": self.name.value,
+            "phones": [p.value for p in self.phones],
+            "birthday": self.birthday.value if self.birthday else None,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Record":
+        record = cls(data.get("name"))
+        if birthday := data.get("birthday"):
+            record.add_birthday(birthday)
+        for phone in data.get("phones"):
+            record.add_phone(phone)
+        return record
+
     def remove_phone(self, phone: str) -> None:
         self.phones = [p for p in self.phones if p.value != phone]
