@@ -3,7 +3,7 @@ import sys
 
 from address_book import AddressBook, Record
 
-CONTACTS = AddressBook()
+book = AddressBook()
 
 
 def input_error_handler(func):
@@ -15,7 +15,7 @@ def input_error_handler(func):
                 return "Invalid number of arguments for add command, please try again. Give me name and phone please."
             elif func.__name__ == "_change_contact":
                 return ("Invalid number of arguments for change command, please try again."
-                        " Give me name and phone please.")
+                        " Give me name, old phone and new phone numbers please.")
             elif func.__name__ == "_get_phone":
                 return "Invalid number of arguments for phone command, please try again. Give me name please."
             else:
@@ -53,7 +53,7 @@ def _parse_input(user_input: str) -> Tuple[str, ...]:
 @input_error_handler
 def _add_contact(*args) -> str:
     name, phone = args
-    if CONTACTS.find(name):
+    if book.find(name):
         change = input(f"Contact {name.capitalize()} already exists. Do you want to change it?")
         if change.lower() in ["yes", "y"]:
             return _change_contact(name, phone)
@@ -62,30 +62,30 @@ def _add_contact(*args) -> str:
     else:
         record = Record(name)
         record.add_phone(phone)
-        CONTACTS.add_record(record)
+        book.add_record(record)
         return f"Contact {name.capitalize()} has been added."
 
 
 @input_error_handler
 def _change_contact(*args) -> str:
-    name, phone = args
-    record = CONTACTS.find(name)
+    name, old_phone, new_phone = args
+    record = book.find(name)
     if record:
-        record.add_phone(phone)
+        record.edit_phone(old_phone, new_phone)
         return f"Contact {name.capitalize()} has been updated."
     else:
         return f"Contact {name.capitalize()} does not exist."
 
 
 def _get_all() -> None:
-    for record in CONTACTS.get_all_records():
+    for record in book.get_all_records():
         print(f"{record.name.value.capitalize()}:\t{', '.join(phone.value for phone in record.phones)}")
 
 
 @input_error_handler
 def _get_phone(*args) -> str:
     name = args[0]
-    record = CONTACTS.find(name)
+    record = book.find(name)
     if not record:
         return f"Contact {name.capitalize()} does not exist."
     else:
