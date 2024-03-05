@@ -25,6 +25,7 @@ def input_error_handler(func):
                 return "Invalid number of arguments for phone command, please try again. Give me name please."
             else:
                 return str(i_ex)
+
     return inner
 
 
@@ -41,6 +42,7 @@ def event_loop_error_handler(func):
             except KeyboardInterrupt:
                 print("\nGoodbye!")
                 sys.exit(0)
+
     return inner
 
 
@@ -92,6 +94,32 @@ def _get_phone(*args) -> str:
         return f"{name.capitalize()}: {', '.join(phone.value for phone in record.phones)}"
 
 
+@input_error_handler
+def _add_birthday(*args) -> str:
+    name, birthday = args
+    record = book.find(name)
+    if not record:
+        return f"Contact {name.capitalize()} does not exist."
+    else:
+        record.add_birthday(birthday)
+        return f"Birthday for {name.capitalize()} has been added."
+
+
+@input_error_handler
+def _show_birthday(*args) -> str:
+    name = args[0]
+    record = book.find(name)
+    if not record:
+        return f"Contact {name.capitalize()} does not exist."
+    else:
+        return f"{name.capitalize()}: {record.birthday.value}"
+
+
+@input_error_handler
+def _get_birthdays_per_week() -> None:
+    book.get_birthdays_per_week()
+
+
 def _exit_bot() -> str:
     return "Goodbye!"
 
@@ -100,13 +128,16 @@ def _hello_bot() -> str:
     return "How can I help you?"
 
 
-SUPPORTED_COMMANDS = {"exit": _exit_bot,
-                      "close": _exit_bot,
-                      "hello": _hello_bot,
-                      "add": _add_contact,
+SUPPORTED_COMMANDS = {"add": _add_contact,
+                      "add-birthday": _add_birthday,
+                      "all": _get_all,
                       "change": _change_contact,
+                      "close": _exit_bot,
+                      "exit": _exit_bot,
+                      "hello": _hello_bot,
                       "phone": _get_phone,
-                      "all": _get_all
+                      "show-birthday": _show_birthday,
+                      "birthdays": _get_birthdays_per_week,
                       }
 
 

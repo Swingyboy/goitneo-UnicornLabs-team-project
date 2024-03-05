@@ -96,11 +96,15 @@ class AddressBook(UserDict):
         for user in updated_users_list:
             if day := self._estimate_birthday_delta(user):
                 if day.lower() in ["saturday", "sunday"]:
-                    users_with_day_this_week["Monday"].append(user.get("name"))
+                    users_with_day_this_week["Monday"].append(user.get("name").capitalize())
                 else:
-                    users_with_day_this_week[day].append(user.get("name"))
+                    users_with_day_this_week[day].append(user.get("name").capitalize())
 
         sorted_days = sorted(users_with_day_this_week.keys(), key=lambda x: list(day_name).index(x))
+
+        if not sorted_days:
+            print("No birthdays this week.")
+            return
 
         for day in sorted_days:
             print(f"{day}: {', '.join(users_with_day_this_week[day])}")
