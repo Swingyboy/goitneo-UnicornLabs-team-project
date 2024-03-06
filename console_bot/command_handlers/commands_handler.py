@@ -1,6 +1,7 @@
 from typing import Union
 
 from contacts import Record
+from base_handler import BaseCommandHandler
 
 
 def input_error_handler(func):
@@ -34,23 +35,15 @@ def input_error_handler(func):
     return inner
 
 
-class DefaultCommandHandler:
+class DefaultCommandHandler(BaseCommandHandler):
     def __init__(self, bot: "ConsoleBot") -> None:
+        super().__init__(bot)
         self.bot = bot
-        self.SUPPORTED_COMMANDS = {"add": self._add_contact,
-                                   "add-phone": self._add_phone,
-                                   "add-birthday": self._add_birthday,
-                                   "all": self._get_all,
-                                   "birthdays": self._get_birthdays_per_week,
-                                   "delete": self._delete_contact,
-                                   "change": self._change_contact,
-                                   "close": self._exit_bot,
-                                   "exit": self._exit_bot,
-                                   "hello": self._hello_bot,
-                                   "phone": self._get_phone,
-                                   "show-birthday": self._show_birthday,
-                                   "remove": self._delete_contact
-                                   }
+        self.SUPPORTED_COMMANDS.update({"add-phone": self._add_phone,
+                                        "delete": self._delete_contact,
+                                        "remove": self._delete_contact
+                                        }
+                                       )
 
     @input_error_handler
     def _add_contact(self, *args) -> str:
