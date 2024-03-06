@@ -46,7 +46,6 @@ class ConsoleBot:
     def run(self, recall_state=True):
         if recall_state:
             recall_bot_state(self)
-            self.handler.book = self.book
         event_loop = self.event_loop_error_handler(self.bot_event_loop)
         event_loop()
 
