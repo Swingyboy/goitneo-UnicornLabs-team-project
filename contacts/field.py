@@ -9,6 +9,11 @@ class Field:
         return str(self.value)
 
 
+class Address(Field):
+    def __init__(self, value: str) -> None:
+        super().__init__(value)
+
+
 class Birthday(Field):
     def __init__(self, value: str) -> None:
         if self._is_valid_date(value):
@@ -18,6 +23,20 @@ class Birthday(Field):
 
     def _is_valid_date(self, value) -> bool:
         pattern = r'^\d{2}\.\d{2}\.\d{4}$'
+        if re.match(pattern, value):
+            return True
+        return False
+
+
+class Email(Field):
+    def __init__(self, value: str) -> None:
+        if self._is_valid_email(value):
+            super().__init__(value)
+        else:
+            raise ValueError("Invalid email format")
+
+    def _is_valid_email(self, value) -> bool:
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if re.match(pattern, value):
             return True
         return False

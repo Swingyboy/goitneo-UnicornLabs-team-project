@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Dict, Union
 
 from contacts import Record
 from base_handler import BaseCommandHandler
@@ -47,16 +47,20 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _add_contact(self, *args) -> str:
-        name, phone = args
+        name, *user_data = args
+        user_data = self.__parse_contact_data(*user_data)
         if self.bot.book.find(name):
             change = input(f"Contact {name.capitalize()} already exists. Do you want to change it?")
             if change.lower() in ["yes", "y"]:
-                return self._change_contact(name, phone)
+                return self._change_contact(name, user_data)
             else:
                 self._hello_bot()
         else:
             record = Record(name)
-            record.add_phone(phone)
+            record.add_phones(user_data.get("phones"))
+            record.add_email(user_data.get("email"))
+            record.add_address(user_data.get("address"))
+            record.add_birthday(user_data.get("birthday"))
             self.bot.book.add_record(record)
             return f"Contact {name.capitalize()} has been added."
 
@@ -71,14 +75,15 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _change_contact(self, *args) -> str:
-        name, old_phone, new_phone = args
+        name, *user_data = args
+        user_data = self.__parse_contact_data(user_data)
         result = self._check_contact_exist(name)
         if isinstance(result, Record):
-            result = result.edit_phone(old_phone, new_phone)
-            if result:
-                return f"Phone number {old_phone} has been changed to {new_phone} for contact {name.capitalize()}."
-            else:
-                return f"Phone number {old_phone} does not exist for contact {name.capitalize()}."
+            result.update_phones(user_data.get("phones"))
+            result.update_email(user_data.get("email"))
+            result.update_address(user_data.get("address"))
+            result.update_birthday(user_data.get("birthday"))
+            return f"Contact {name.capitalize()} was updated."
         return result
 
     def _check_contact_exist(self, name: str) -> Union[Record, str]:
@@ -88,6 +93,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         else:
             return record
 
+    @input_error_handler
     def _delete_contact(self, *args) -> str:
         name = args[0]
         result = self.bot.book.delete(name)
@@ -95,9 +101,17 @@ class DefaultCommandHandler(BaseCommandHandler):
             return f"Contact {name.capitalize()} has been deleted."
         return f"Contact {name.capitalize()} does not exist."
 
+    @input_error_handler
     def _get_all(self) -> None:
         for record in self.bot.book.get_all_records():
-            print(f"{record.name.value.capitalize()}:\t{', '.join(phone.value for phone in record.phones)}")
+            res = f"{record.name.value.capitalize()}:\t{', '.join(phone.value for phone in record.phones)}"
+            if record.email:
+                res += f"\t{record.email.value}"
+            if record.birthday:
+                res += f"\t{record.birthday.value}"
+            if record.address:
+                res += f"\t{record.address.value}"
+            print(res)
 
     @input_error_handler
     def _get_phone(self, *args) -> str:
@@ -133,3 +147,19 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _hello_bot(self) -> str:
         return "How can I help you?"
+
+    def __parse_contact_data(self, *data) -> Dict[str, Union[str, list]]:
+        phones = [d for d in data if d.isdigit()]
+        args_number = len(data)
+        phones_len = len(phones)
+        args_number -= phones_len
+        if args_number == 0:
+            return {"phones": phones}
+        elif args_number == 1:
+            return {"phones": phones, "birthday": data[phones_len]}
+        elif args_number == 2:
+            return {"phones": phones, "birthday": data[phones_len], "email": data[phones_len + 1]}
+        elif args_number == 3:
+            return {"phones": phones, "birthday": data[phones_len], "email": data[phones_len + 1], "address": data[phones_len + 2]}
+        else:
+            raise ValueError("Invalid number of arguments")
