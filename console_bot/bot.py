@@ -3,11 +3,10 @@ import sys
 
 from bot_memmory import recall_bot_state, save_bot_state
 from contacts import AddressBook
-from commands_handler import DefaultCommandHandler
 
 
 class ConsoleBot:
-    def __init__(self, command_handler=DefaultCommandHandler) -> None:
+    def __init__(self, command_handler: "BaseCommandHandler") -> None:
         self.book = AddressBook()
         self.handler = command_handler(self)
         self.commands = self.handler.SUPPORTED_COMMANDS
@@ -41,6 +40,7 @@ class ConsoleBot:
                     print("\nGoodbye!")
                     save_bot_state(self)
                     sys.exit(0)
+
         return inner
 
     def run(self, recall_state=True):
