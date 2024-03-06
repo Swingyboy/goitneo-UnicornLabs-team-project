@@ -1,7 +1,7 @@
 from typing import Tuple
 import sys
 
-from bot_memmory import recall_bot_state, save_bot_state
+from bot_memory import recall_bot_state, save_bot_state
 from contacts import AddressBook
 
 
