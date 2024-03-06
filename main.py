@@ -1,5 +1,5 @@
 from console_bot import ConsoleBot
-from console_bot.command_handlers import DefaultCommandHandler
+from console_bot.commands_handlers import DefaultCommandHandler
 
 
 def main():
