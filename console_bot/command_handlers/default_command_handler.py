@@ -76,13 +76,17 @@ class DefaultCommandHandler(BaseCommandHandler):
     @input_error_handler
     def _change_contact(self, *args) -> str:
         name, *user_data = args
-        user_data = self.__parse_contact_data(user_data)
+        user_data = self.__parse_contact_data(*user_data)
         result = self._check_contact_exist(name)
         if isinstance(result, Record):
-            result.update_phones(user_data.get("phones"))
-            result.update_email(user_data.get("email"))
-            result.update_address(user_data.get("address"))
-            result.update_birthday(user_data.get("birthday"))
+            if user_data.get("phones"):
+                result.update_phones(user_data.get("phones"))
+            if user_data.get("email"):
+                result.update_email(user_data.get("email"))
+            if user_data.get("address"):
+                result.update_address(user_data.get("address"))
+            if user_data.get("birthday"):
+                result.update_birthday(user_data.get("birthday"))
             return f"Contact {name.capitalize()} was updated."
         return result
 
