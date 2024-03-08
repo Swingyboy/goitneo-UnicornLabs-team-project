@@ -70,6 +70,8 @@ class Record:
             "name": self.name.value,
             "phones": [p.value for p in self.phones],
             "birthday": self.birthday.value if self.birthday else None,
+            "email": self.email.value if self.email else None,
+            "address": self.address.value if self.address else None
         }
 
     @classmethod
@@ -77,8 +79,12 @@ class Record:
         record = cls(data.get("name"))
         if birthday := data.get("birthday"):
             record.add_birthday(birthday)
-        for phone in data.get("phones"):
-            record.add_phone(phone)
+        if phones := data.get("phones"):
+            record.add_phones(phones)
+        if email := data.get("email"):
+            record.add_email(email)
+        if address := data.get("address"):
+            record.add_address(address)
         return record
 
     def remove_phone(self, phone: str) -> None:
