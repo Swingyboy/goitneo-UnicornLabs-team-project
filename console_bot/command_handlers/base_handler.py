@@ -12,6 +12,7 @@ class BaseCommandHandler(ABC):
                                    "close": self._exit_bot,
                                    "exit": self._exit_bot,
                                    "hello": self._hello_bot,
+                                   "help": self._get_help,
                                    "phone": self._get_phone,
                                    "show-birthday": self._show_birthday
                                    }
@@ -26,6 +27,10 @@ class BaseCommandHandler(ABC):
 
     @abstractmethod
     def _get_all(self) -> None:
+        ...
+
+    @abstractmethod
+    def _get_help(self) -> str:
         ...
 
     @abstractmethod
