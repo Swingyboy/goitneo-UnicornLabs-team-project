@@ -17,7 +17,7 @@ class Record:
         self.address: Optional[Address] = Address(address) if address else None
 
     def __str__(self):
-        return f"Contact name: {self.name.value}, phone: {self.phone.value}, "
+        return f"Contact name: {self.name.value.capitalize()}, phone: {self.phone.value}, "
 
     def add_address(self, address: str) -> None:
         self.address = Address(address)
@@ -44,9 +44,8 @@ class Record:
         self.add_phone(new_phone)
 
     def find_phone(self, phone: str) -> Optional[Phone]:
-        for p in self.phones:
-            if p.value == phone:
-                return p
+        if self.phone and self.phone.value == phone:
+            return self.phone
         return None
 
     def to_dict(self):

@@ -27,15 +27,9 @@ class ConsoleBot:
             while True:
                 try:
                     return func(*args, **kwargs)
-                except KeyError:
-                    print(f"Invalid command, supported commands are:")
-                    for key in self.commands.keys():
-                        print(f" - {key}")
+                except (KeyError, ValueError) as ex:
+                    print(f"Invalid command, use 'help' to see supported commands.")
                     print("Please try again.")
-                except ValueError as v_ex:
-                    print(f"Invalid command, supported commands are:")
-                    for key in self.commands.keys():
-                        print(f" - {key}")
                 except KeyboardInterrupt:
                     print("\nGoodbye!")
                     save_bot_state(self)
