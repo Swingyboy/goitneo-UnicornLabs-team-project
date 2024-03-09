@@ -43,7 +43,13 @@ class DefaultCommandHandler(BaseCommandHandler):
     def __init__(self, bot: "ConsoleBot") -> None:
         super().__init__(bot)
         self.bot = bot
-        self.SUPPORTED_COMMANDS.update({"delete": self._delete_contact, "remove": self._delete_contact})
+        self.SUPPORTED_COMMANDS.update({"add-address": self._add_address,
+                                        "add-email": self._add_email,
+                                        "delete": self._delete_contact,
+                                        "remove": self._delete_contact,
+                                        "search": self._search_contact,
+                                        }
+                                       )
 
     @input_error_handler
     def _add_birthday(self, *args) -> str:
@@ -67,6 +73,24 @@ class DefaultCommandHandler(BaseCommandHandler):
             record = Record.from_tuple(name, *user_data)
             self.bot.book.add_record(record)
             return f"Contact {name.capitalize()} has been added."
+
+    @input_error_handler
+    def _add_email(self, *args) -> str:
+        name, email = args
+        result = self._check_contact_exist(name)
+        if isinstance(result, Record):
+            result.add_email(email)
+            return f"Email for {name.capitalize()} has been added."
+        return result
+
+    @input_error_handler
+    def _add_address(self, *args) -> str:
+        name, address = args
+        result = self._check_contact_exist(name)
+        if isinstance(result, Record):
+            result.add_address(address)
+            return f"Address for {name.capitalize()} has been added."
+        return result
 
     @input_error_handler
     def _change_contact(self, *args) -> str:
@@ -105,6 +129,23 @@ class DefaultCommandHandler(BaseCommandHandler):
                 res += f"\t{record.address.value}"
             print(res)
 
+    def _get_help(self) -> str:
+        return ("Supported commands:\n"
+                "add <name> <phone> [birthday] [email] [address] - add a new contact\n"
+                "add-birthday <name> <birthday> - add birthday to a contact\n"
+                "add-email <name> <email> - add email to a contact\n"
+                "add-address <name> <address> - add address to a contact\n"
+                "all - show all contacts\n"
+                "change <name> [new_phone] [new_birthday] [new_email] [new_address] - change contact\n"
+                "delete <name> - delete contact\n"
+                "exit, close - close the program\n"
+                "hello - display welcome message\n"
+                "phone <name> - show phone number\n"
+                "show-birthday <name> - show birthday\n"
+                "birthdays - show birthdays for the next 7 days\n"
+                "help - show this message\n"
+                )
+
     @input_error_handler
     def _get_phone(self, *args) -> str:
         name = args[0]
@@ -112,6 +153,13 @@ class DefaultCommandHandler(BaseCommandHandler):
         if isinstance(result, Record):
             return f"{name.capitalize()}: {result.phone.value}"
         return result
+
+    @input_error_handler
+    def _search_contact(self, by_field: str, value: str) -> str:
+        result = self.bot.book.search(by_field, value)
+        if result:
+            return result
+        return f"No contacts found with {by_field} {value}."
 
     @input_error_handler
     def _show_birthday(self, *args) -> str:

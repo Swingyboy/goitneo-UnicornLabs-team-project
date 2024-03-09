@@ -63,6 +63,12 @@ class AddressBook(UserDict):
         except KeyError:
             return None
 
+    def search(self, by_field: str, value: str) -> Optional[str]:
+        for record in self.data.values():
+            if getattr(record, by_field).value == value:
+                return record
+        return None
+
     def _get_users_birthday_in_current_year(self, data: Dict[str, ...]) -> List[Dict[str, Union[str, datetime]]]:
         updated_users_list = []
         for user in data:
