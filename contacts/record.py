@@ -6,18 +6,18 @@ class Record:
     def __init__(self,
                  name: str,
                  address: str = None,
-                 phones: list = None,
+                 phone: str = None,
                  birthday: str = None,
                  email: str = None
                  ) -> None:
         self.name: Name = Name(name)
-        self.phones: list = [Phone(p) for p in phones] if phones else []
+        self.phone: Optional[Phone] = Phone(phone) if phone else None
         self.birthday: Optional[Birthday] = Birthday(birthday) if birthday else None
         self.email: Optional[Email] = Email(email) if email else None
         self.address: Optional[Address] = Address(address) if address else None
 
     def __str__(self):
-        return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
+        return f"Contact name: {self.name.value}, phone: {self.phone.value}, "
 
     def add_address(self, address: str) -> None:
         self.address = Address(address)
@@ -29,35 +29,19 @@ class Record:
         self.email = Email(email)
 
     def add_phone(self, phone) -> None:
-        self.phones.append(Phone(phone))
-
-    def add_phones(self, phones: list) -> None:
-        for phone in phones:
-            self.add_phone(phone)
-
-    def edit_phone(self, old_p: str, new_p: str) -> bool:
-        if old_p not in self.phones:
-            return False
-        for p in self.phones:
-            if p.value == old_p:
-                p.value = new_p
-                return True
-        return False
+        self.phone = Phone(phone)
 
     def update_address(self, new_address: str) -> None:
-        self.address = Address(new_address)
+        self.add_address(new_address)
 
     def update_birthday(self, new_birthday: str) -> None:
-        self.birthday = Birthday(new_birthday)
+        self.add_birthday(new_birthday)
 
     def update_email(self, new_email: str) -> None:
-        self.email = Email(new_email)
+        self.add_email(new_email)
 
-    def update_phones(self, new_p: list) -> bool:
-        for p in new_p:
-            if p not in [phone.value for phone in self.phones]:
-                self.phones.append(Phone(p))
-        return True
+    def update_phone(self, new_phone: str) -> None:
+        self.add_phone(new_phone)
 
     def find_phone(self, phone: str) -> Optional[Phone]:
         for p in self.phones:
@@ -68,24 +52,44 @@ class Record:
     def to_dict(self):
         return {
             "name": self.name.value,
-            "phones": [p.value for p in self.phones],
+            "phone": self.phone.value if self.phone else None,
             "birthday": self.birthday.value if self.birthday else None,
             "email": self.email.value if self.email else None,
             "address": self.address.value if self.address else None
         }
+
+    def update_fields_from_tuple(self, *fields):
+        if  1 < len(fields) > 4:
+            raise ValueError("Invalid number of arguments.")
+        for item in fields:
+            if len(item) == 10 and item.isdigit():
+                self.add_phone(item)
+            elif '@' in item and '.' in item:
+                self.add_email(item)
+            elif len(item) == 10 and item.count('.') == 2:
+                self.add_birthday(item)
+            else:
+                self.add_address(item)
+
+    @classmethod
+    def from_tuple(cls, name: str, *fields) -> "Record":
+        record = cls(name)
+        record.update_fields_from_tuple(*fields)
+        if not record.phone:
+            raise ValueError("Phone number is required.")
+        return record
 
     @classmethod
     def from_dict(cls, data: dict) -> "Record":
         record = cls(data.get("name"))
         if birthday := data.get("birthday"):
             record.add_birthday(birthday)
-        if phones := data.get("phones"):
-            record.add_phones(phones)
+        if phone := data.get("phone"):
+            record.add_phone(phone)
+        else:
+            raise ValueError("Phone number is required.")
         if email := data.get("email"):
             record.add_email(email)
         if address := data.get("address"):
             record.add_address(address)
         return record
-
-    def remove_phone(self, phone: str) -> None:
-        self.phones = [p for p in self.phones if p.value != phone]
