@@ -1,4 +1,4 @@
-from typing import Dict, Union
+from typing import Tuple, Union
 
 from contacts import Record
 from base_handler import BaseCommandHandler
@@ -46,13 +46,24 @@ class DefaultCommandHandler(BaseCommandHandler):
         self.SUPPORTED_COMMANDS.update({"add-address": self._add_address,
                                         "add-email": self._add_email,
                                         "add-note": self._add_note,
+                                        "add-tags": self._add_tags_to_note,
                                         "delete": self._delete_contact,
+                                        "delete-tags": self._delete_tags_from_note,
                                         "get-notes": self._get_notes,
                                         "remove": self._delete_contact,
                                         "search": self._find_contact,
-                                        "search-note": self._find_note,
+                                        "search-note-by": self._find_note,
                                         }
                                        )
+
+    @input_error_handler
+    def _add_address(self, *args) -> str:
+        name, address = args
+        result = self._check_contact_exist(name)
+        if isinstance(result, Record):
+            result.add_address(address)
+            return f"Address for {name.capitalize()} has been added."
+        return result
 
     @input_error_handler
     def _add_birthday(self, *args) -> str:
@@ -87,18 +98,14 @@ class DefaultCommandHandler(BaseCommandHandler):
         return result
 
     @input_error_handler
-    def _add_address(self, *args) -> str:
-        name, address = args
-        result = self._check_contact_exist(name)
-        if isinstance(result, Record):
-            result.add_address(address)
-            return f"Address for {name.capitalize()} has been added."
-        return result
-
-    @input_error_handler
     def _add_note(self, *args) -> str:
         self.bot.note_book.new_note(*args)
         return "Note has been added."
+
+    def _add_tags_to_note(self, *args) -> str:
+        note_index, *tags = args
+        note_index = int(note_index) - 1  # Note count starts from 1
+        return self.bot.note_book.add_tags_to_note(note_index, *tags)
 
     @input_error_handler
     def _change_contact(self, *args) -> str:
@@ -126,6 +133,12 @@ class DefaultCommandHandler(BaseCommandHandler):
         return f"Contact {name.capitalize()} does not exist."
 
     @input_error_handler
+    def _delete_tags_from_note(self, *args) -> str:
+        note_index, *tags = args
+        note_index = int(note_index) - 1  # Note count starts from 1
+        return self.bot.note_book.delete_tags_from_note(note_index, *tags)
+
+    @input_error_handler
     def _find_contact(self, by_field: str, value: str) -> str:
         result = self.bot.address_book.search(by_field, value)
         if result:
@@ -133,11 +146,14 @@ class DefaultCommandHandler(BaseCommandHandler):
         return f"No contacts found with {by_field} {value}."
 
     @input_error_handler
-    def _find_note(self, by_field: str, value: str) -> str:
-        result = self.bot.note_book.search(by_field, value)
+    def _find_note(self, by_field: str, value: str, *args) -> str:
+        sorted_by, order = self.__parse_find_params(*args)
+        result = self.bot.note_book.search(by_field, value, sorted_by, order)
         if result:
+            return_str = ""
             for note in result:
-                print(f"Message: {note.text.value}\nTags: {', '.join([tag.value for tag in note.tags])}\n")
+                return_str += f"Index: {note.index}\nMessage: {note.text.value}\nTags: {', '.join([tag.value for tag in note.tags])}\n"
+            return return_str
         return f"No notes found with {by_field} {value}."
 
     @input_error_handler
@@ -172,7 +188,7 @@ class DefaultCommandHandler(BaseCommandHandler):
     @input_error_handler
     def _get_notes(self):
         for note in self.bot.note_book.data:
-            print(f"Message: {note.text.value}\nTags: {', '.join([tag.value for tag in note.tags])}\n")
+            print(f"Index: {note.index}\nMessage: {note.text.value}\nTags: {', '.join([tag.value for tag in note.tags])}\n")
 
     @input_error_handler
     def _get_phone(self, *args) -> str:
@@ -199,3 +215,15 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _hello_bot(self) -> str:
         return "How can I help you?"
+
+    def __parse_find_params(self, *args) -> Tuple[str, str]:
+        sorted_by = "index"
+        order = "asc"
+        if args:
+            if "sorted-by" in args:
+                sorted_by = args[args.index("sorted-by") + 1]
+                try:
+                    order = args[args.index("sorted-by") + 2]
+                except IndexError:
+                    pass
+        return sorted_by, order
