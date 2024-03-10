@@ -2,12 +2,13 @@ from typing import Tuple
 import sys
 
 from bot_memory import recall_bot_state, save_bot_state
-from contacts import AddressBook
+from contacts import AddressBook, NoteBook
 
 
 class ConsoleBot:
     def __init__(self, command_handler: "BaseCommandHandler") -> None:
-        self.book = AddressBook()
+        self.address_book = AddressBook()
+        self.note_book = NoteBook()
         self.handler = command_handler(self)
         self.commands = self.handler.SUPPORTED_COMMANDS
 

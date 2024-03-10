@@ -55,3 +55,18 @@ class Phone(Field):
         if len(value) < 10:
             raise ValueError("Phone number must be at least 10 digits.")
         super().__init__(value)
+
+
+class Tag(Field):
+    def __init__(self, value: str) -> None:
+        super().__init__(value)
+
+        
+class Text(Field):
+    def __init__(self, value: str) -> None:
+        if not self._has_valid_length(value):
+            raise ValueError("Text must be between 1 and 512 characters long.")
+        super().__init__(value)
+
+    def _has_valid_length(self, value: str) -> bool:
+        return 0 < len(value) < 512

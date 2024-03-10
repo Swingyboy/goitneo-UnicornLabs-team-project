@@ -45,9 +45,12 @@ class DefaultCommandHandler(BaseCommandHandler):
         self.bot = bot
         self.SUPPORTED_COMMANDS.update({"add-address": self._add_address,
                                         "add-email": self._add_email,
+                                        "add-note": self._add_note,
                                         "delete": self._delete_contact,
+                                        "get-notes": self._get_notes,
                                         "remove": self._delete_contact,
-                                        "search": self._search_contact,
+                                        "search": self._find_contact,
+                                        "search-note": self._find_note,
                                         }
                                        )
 
@@ -63,7 +66,7 @@ class DefaultCommandHandler(BaseCommandHandler):
     @input_error_handler
     def _add_contact(self, *args) -> str:
         name, *user_data = args
-        if self.bot.book.find(name):
+        if self.bot.address_book.find(name):
             change = input(f"Contact {name.capitalize()} already exists. Do you want to change it?")
             if change.lower() in ["yes", "y"]:
                 return self._change_contact(*args)
@@ -71,7 +74,7 @@ class DefaultCommandHandler(BaseCommandHandler):
                 self._hello_bot()
         else:
             record = Record.from_tuple(name, *user_data)
-            self.bot.book.add_record(record)
+            self.bot.address_book.add_record(record)
             return f"Contact {name.capitalize()} has been added."
 
     @input_error_handler
@@ -93,6 +96,11 @@ class DefaultCommandHandler(BaseCommandHandler):
         return result
 
     @input_error_handler
+    def _add_note(self, *args) -> str:
+        self.bot.note_book.new_note(*args)
+        return "Note has been added."
+
+    @input_error_handler
     def _change_contact(self, *args) -> str:
         name, *user_data = args
         result = self._check_contact_exist(name)
@@ -103,7 +111,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _check_contact_exist(self, name: str) -> Union[Record, str]:
-        record = self.bot.book.find(name)
+        record = self.bot.address_book.find(name)
         if not record:
             return f"Contact {name.capitalize()} does not exist."
         else:
@@ -112,14 +120,29 @@ class DefaultCommandHandler(BaseCommandHandler):
     @input_error_handler
     def _delete_contact(self, *args) -> str:
         name = args[0]
-        result = self.bot.book.delete(name)
+        result = self.bot.address_book.delete(name)
         if result:
             return f"Contact {name.capitalize()} has been deleted."
         return f"Contact {name.capitalize()} does not exist."
 
     @input_error_handler
+    def _find_contact(self, by_field: str, value: str) -> str:
+        result = self.bot.address_book.search(by_field, value)
+        if result:
+            return result
+        return f"No contacts found with {by_field} {value}."
+
+    @input_error_handler
+    def _find_note(self, by_field: str, value: str) -> str:
+        result = self.bot.note_book.search(by_field, value)
+        if result:
+            for note in result:
+                print(f"Message: {note.text.value}\nTags: {', '.join([tag.value for tag in note.tags])}\n")
+        return f"No notes found with {by_field} {value}."
+
+    @input_error_handler
     def _get_all(self) -> None:
-        for record in self.bot.book.get_all_records():
+        for record in self.bot.address_book.get_all_records():
             res = f"{record.name.value.capitalize()}:\t{record.phone.value}"
             if record.email:
                 res += f"\t{record.email.value}"
@@ -147,6 +170,11 @@ class DefaultCommandHandler(BaseCommandHandler):
                 )
 
     @input_error_handler
+    def _get_notes(self):
+        for note in self.bot.note_book.data:
+            print(f"Message: {note.text.value}\nTags: {', '.join([tag.value for tag in note.tags])}\n")
+
+    @input_error_handler
     def _get_phone(self, *args) -> str:
         name = args[0]
         result = self._check_contact_exist(name)
@@ -155,23 +183,16 @@ class DefaultCommandHandler(BaseCommandHandler):
         return result
 
     @input_error_handler
-    def _search_contact(self, by_field: str, value: str) -> str:
-        result = self.bot.book.search(by_field, value)
-        if result:
-            return result
-        return f"No contacts found with {by_field} {value}."
-
-    @input_error_handler
     def _show_birthday(self, *args) -> str:
         name = args[0]
-        result = self.bot.book.find(name)
+        result = self.bot.address_book.find(name)
         if isinstance(result, Record):
             return f"{name.capitalize()}: {result.birthday.value}"
         return result
 
     @input_error_handler
     def _get_birthdays_per_week(self) -> None:
-        self.bot.book.get_birthdays_per_week()
+        self.bot.address_book.get_birthdays_per_week()
 
     def _exit_bot(self) -> str:
         return "Goodbye!"
