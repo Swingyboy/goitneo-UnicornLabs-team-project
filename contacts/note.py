@@ -3,9 +3,16 @@ from field import Tag, Text
 
 
 class Note:
+    _index = 0
+
     def __init__(self, text: str, tags: List[str] = None) -> None:
         self.text = Text(text)
         self.tags = [Tag(tag) for tag in tags] if tags else []
+        Note._index += 1
+        self.index = Note._index
+
+    def __del__(self):
+        Note._index -= 1
 
     def add_tag(self, tag: str) -> None:
         self.tags.append(Tag(tag))
