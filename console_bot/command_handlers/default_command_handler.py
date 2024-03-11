@@ -1,7 +1,8 @@
 from typing import Optional, Tuple, Union
 
-from console_bot.book_items import Record
 from base_handler import BaseCommandHandler
+from console_bot.book_items import Record
+from print_utils import _pprint_notes, _pprint_records
 
 
 def input_error_handler(func):
@@ -173,15 +174,16 @@ class DefaultCommandHandler(BaseCommandHandler):
         records = self.bot.address_book.get_all_records()
         if not records:
             print("The address book is empty.")
-        for record in records:
-            res = f"{record.name.value.capitalize()}:\t{record.phone.value}"
-            if record.email:
-                res += f"\t{record.email.value}"
-            if record.birthday:
-                res += f"\t{record.birthday.value}"
-            if record.address:
-                res += f"\t{record.address.value}"
-            print(res)
+        _pprint_records(records)
+        # for record in records:
+        #     res = f"{record.name.value.capitalize()}:\t{record.phone.value}"
+        #     if record.email:
+        #         res += f"\t{record.email.value}"
+        #     if record.birthday:
+        #         res += f"\t{record.birthday.value}"
+        #     if record.address:
+        #         res += f"\t{record.address.value}"
+        #     print(res)
 
     @input_error_handler
     def _get_birthdays_from_date(self, *args) -> None:
@@ -212,8 +214,9 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _get_notes(self):
-        for note in self.bot.note_book.data:
-            print(f"Index: {note.index}\nMessage: {note.text.value}\nTags: {', '.join([tag.value for tag in note.tags])}\n")
+        _pprint_notes(self.bot.note_book.data)
+        # for note in self.bot.note_book.data:
+        #     print(f"Index: {note.index}\nMessage: {note.text.value}\nTags: {', '.join([tag.value for tag in note.tags])}\n")
 
     @input_error_handler
     def _get_phone(self, *args) -> str:
