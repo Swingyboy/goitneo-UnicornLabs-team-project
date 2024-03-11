@@ -2,6 +2,7 @@ from prettytable import PrettyTable
 
 
 def _pprint_notes(data):
+    """Pretty print the notes"""
     table = PrettyTable()
     table.field_names = ["Index", "Message", "Tags"]
 
@@ -13,6 +14,7 @@ def _pprint_notes(data):
 
 
 def _pprint_records(data):
+    """Pretty print the records"""
     table = PrettyTable()
     table.field_names = ["Name", "Phone", "Birthday", "Email", "Address"]
 

@@ -6,6 +6,7 @@ from print_utils import _pprint_notes, _pprint_records
 
 
 def input_error_handler(func):
+    """A decorator to handle input errors."""
     def inner(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -58,6 +59,7 @@ class DefaultCommandHandler(BaseCommandHandler):
                                        )
 
     def __parse_find_params(self, *args) -> Tuple[str, str]:
+        """Parse the sorted-by and order parameters from the input."""
         sorted_by: str = "index"
         order: str = "asc"
         if args:
@@ -71,6 +73,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _add_address(self, *args) -> str:
+        """Add address to a contact."""
         name, address = args
         result: Union["Record", str] = self._check_contact_exist(name)
         if not isinstance(result, str):
@@ -80,6 +83,9 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _add_birthday(self, *args) -> str:
+        """Add birthday to a contact.
+        Format should be "DD.MM.YYYY".
+        """
         name, birthday = args
         result: Union["Record", str] = self._check_contact_exist(name)
         if not isinstance(result, str):
@@ -89,6 +95,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _add_contact(self, *args) -> str:
+        """Add a new contact to the address book."""
         name, *user_data = args
         if self.bot.address_book.find(name):
             change: str = input(f"Contact {name.capitalize()} already exists. Do you want to change it? ")
@@ -103,6 +110,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _add_email(self, *args) -> str:
+        """Add email to a contact."""
         name, email = args
         result: ["Record", str] = self._check_contact_exist(name)
         if not isinstance(result, str):
@@ -112,16 +120,19 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _add_note(self, *args) -> str:
+        """Add a new note to the notebook."""
         self.bot.note_book.new_note(*args)
         return "Note has been added."
 
     def _add_tags_to_note(self, *args) -> str:
+        """Add tags to a note by index."""
         note_index, *tags = args
         note_index = int(note_index) - 1  # Note count starts from 1
         return self.bot.note_book.add_tags_to_note(note_index, *tags)
 
     @input_error_handler
     def _change_contact(self, *args) -> str:
+        """Change contact data."""
         name, *user_data = args
         result: Union["Record", str] = self._check_contact_exist(name)
         if not isinstance(result, str):
@@ -131,6 +142,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _check_contact_exist(self, name: str) -> Union[Record, str]:
+        """Check if the contact exists in the address book."""
         record: Optional["Record"] = self.bot.address_book.find(name)
         if not record:
             return f"Contact {name.capitalize()} does not exist."
@@ -139,6 +151,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _delete_contact(self, *args) -> str:
+        """Delete a contact from the address book."""
         name = args[0]
         result: bool = self.bot.address_book.delete(name)
         if result:
@@ -147,12 +160,14 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _delete_tags_from_note(self, *args) -> str:
+        """Delete tags from a note by index."""
         note_index, *tags = args
         note_index = int(note_index) - 1  # Note count starts from 1
         return self.bot.note_book.delete_tags_from_note(note_index, *tags)
 
     @input_error_handler
     def _find_contact(self, by_field: str, value: str) -> str:
+        """Find a contact by a given field and value."""
         result: Optional[str] = self.bot.address_book.search(by_field, value)
         if result:
             return result
@@ -160,6 +175,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _find_note(self, by_field: str, value: str, *args) -> str:
+        """Find a note by a given field and value."""
         sorted_by, order = self.__parse_find_params(*args)
         result = self.bot.note_book.search(by_field, value, sorted_by, order)
         if result:
@@ -171,6 +187,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _get_all(self) -> None:
+        """Show all book_items in the address book."""
         records = self.bot.address_book.get_all_records()
         if not records:
             print("The address book is empty.")
@@ -178,6 +195,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _get_birthdays_from_date(self, *args) -> None:
+        """Show birthdays for the next n days. By default, n=7."""
         try:
             number_of_days: int = int(args[0])
         except IndexError:
@@ -187,6 +205,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         self.bot.address_book.get_birthdays_per_week(number_of_days)
 
     def _get_help(self) -> str:
+        """Show supported commands."""
         return ("Supported commands:\n"
                 "add <name> <phone> [birthday] [email] [address] - add a new contact\n"
                 "add-birthday <name> <birthday> - add birthday to a contact\n"
@@ -205,10 +224,12 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _get_notes(self):
+        """Show all notes in the notebook."""
         _pprint_notes(self.bot.note_book.data)
 
     @input_error_handler
     def _get_phone(self, *args) -> str:
+        """Show phone number for a contact."""
         name = args[0]
         result = self._check_contact_exist(name)
         if not isinstance(result, str):
@@ -217,6 +238,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _show_birthday(self, *args) -> str:
+        """Show birthday for a contact."""
         name = args[0]
         result: Optional["Record"] = self.bot.address_book.find(name)
         if result:
@@ -224,7 +246,9 @@ class DefaultCommandHandler(BaseCommandHandler):
         return f"The birthday date is not specified for {name.capitalize()} contact."
 
     def _exit_bot(self) -> str:
+        """Exit the bot."""
         return "Goodbye!"
 
     def _hello_bot(self) -> str:
+        """Greet the bot."""
         return "How can I help you?"

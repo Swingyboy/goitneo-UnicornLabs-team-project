@@ -3,9 +3,11 @@ from field import Tag, Text
 
 
 class Note:
+    """A note with a message and tags."""
     _index = 0
 
     def __init__(self, text: str, tags: List[str] = None) -> None:
+        """Initialize the note with a message and tags."""
         self.text = Text(text)
         self.tags = [Tag(tag) for tag in tags] if tags else []
         Note._index += 1
@@ -15,20 +17,25 @@ class Note:
         Note._index -= 1
 
     def add_tag(self, tag: str) -> None:
+        """Add a tag to the note."""
         self.tags.append(Tag(tag))
 
     def remove_tag(self, tag: str) -> None:
+        """Remove a tag from the note."""
         self.tags.remove(Tag(tag))
 
     def to_dict(self) -> dict:
+        """Convert the note to a dictionary."""
         return {"text": self.text.value, "tags": [tag.value for tag in self.tags]}
 
     @classmethod
     def from_dict(cls, data: dict) -> "Note":
+        """Create a note from a dictionary."""
         return cls(data["text"], data["tags"])
 
     @classmethod
     def from_tuple(cls, *data) -> "Note":
+        """Create a note from a tuple."""
         tags: List[str] = []
         if len(data) >= 1:
             # Extracting the message

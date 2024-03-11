@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 
 class BaseCommandHandler(ABC):
+    """Base class for command handlers."""
     def __init__(self, bot: "ConsoleBot") -> None:
         self.bot = bot
         self.SUPPORTED_COMMANDS = {"add": self._add_contact,

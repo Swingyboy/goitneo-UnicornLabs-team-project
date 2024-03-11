@@ -3,6 +3,7 @@ from field import Address, Birthday, Email, Name, Phone
 
 
 class Record:
+    """A record in the address book."""
     def __init__(self,
                  name: str,
                  address: str = None,
@@ -20,35 +21,45 @@ class Record:
         return f"Contact name: {self.name.value.capitalize()}, phone: {self.phone.value}, "
 
     def add_address(self, address: str) -> None:
+        """Add an address to the record."""
         self.address = Address(address)
 
     def add_birthday(self, birthday: str) -> None:
+        """Add a birthday to the record."""
         self.birthday = Birthday(birthday)
 
     def add_email(self, email: str) -> None:
+        """Add an email to the record."""
         self.email = Email(email)
 
     def add_phone(self, phone) -> None:
+        """Add a phone to the record."""
         self.phone = Phone(phone)
 
     def update_address(self, new_address: str) -> None:
+        """Update the address of the record."""
         self.add_address(new_address)
 
     def update_birthday(self, new_birthday: str) -> None:
+        """Update the birthday of the record."""
         self.add_birthday(new_birthday)
 
     def update_email(self, new_email: str) -> None:
+        """Update the email of the record."""
         self.add_email(new_email)
 
     def update_phone(self, new_phone: str) -> None:
+        """Update the phone of the record."""
         self.add_phone(new_phone)
 
     def find_phone(self, phone: str) -> Optional[Phone]:
+        """Find a phone number in the record."""
         if self.phone and self.phone.value == phone:
             return self.phone
         return None
 
     def to_dict(self):
+        """Convert the record to a dictionary."""
         return {
             "name": self.name.value,
             "phone": self.phone.value if self.phone else None,
@@ -58,7 +69,8 @@ class Record:
         }
 
     def update_fields_from_tuple(self, *fields):
-        if  1 < len(fields) > 4:
+        """Update the fields of the record from a tuple."""
+        if 1 < len(fields) > 4:
             raise ValueError("Invalid number of arguments.")
         for item in fields:
             if len(item) == 10 and item.isdigit():
@@ -72,6 +84,7 @@ class Record:
 
     @classmethod
     def from_tuple(cls, name: str, *fields) -> "Record":
+        """Create a record from a tuple."""
         record = cls(name)
         record.update_fields_from_tuple(*fields)
         if not record.phone:
@@ -80,6 +93,7 @@ class Record:
 
     @classmethod
     def from_dict(cls, data: dict) -> "Record":
+        """Create a record from a dictionary."""
         record = cls(data.get("name"))
         if birthday := data.get("birthday"):
             record.add_birthday(birthday)

@@ -6,6 +6,7 @@ from utils import _find_best_match, _parse_input
 
 
 class ConsoleBot:
+    """A class to represent a console bot."""
     def __init__(self, command_handler: "BaseCommandHandler") -> None:
         self.address_book = AddressBook()
         self.note_book = NoteBook()
@@ -13,6 +14,7 @@ class ConsoleBot:
         self.commands = self.handler.SUPPORTED_COMMANDS
 
     def bot_event_loop(self):
+        """The main event loop for the bot."""
         while True:
             user_input = input("Enter a command: ").strip().lower()
             command, *args = _parse_input(user_input)
@@ -24,6 +26,7 @@ class ConsoleBot:
                     break
 
     def event_loop_error_handler(self, func):
+        """A decorator to handle exceptions in the event loop."""
         def inner(*args, **kwargs):
             while True:
                 try:
