@@ -1,8 +1,8 @@
-from typing import Tuple
 import sys
 
 from bot_memory import recall_bot_state, save_bot_state
 from contacts import AddressBook, NoteBook
+from utils import _find_best_match, _parse_input
 
 
 class ConsoleBot:
@@ -15,7 +15,7 @@ class ConsoleBot:
     def bot_event_loop(self):
         while True:
             user_input = input("Enter a command: ").strip().lower()
-            command, *args = self._parse_input(user_input)
+            command, *args = _parse_input(user_input)
             result = self.commands[command](*args)
             if result:
                 print(result)
@@ -29,7 +29,12 @@ class ConsoleBot:
                 try:
                     return func(*args, **kwargs)
                 except (KeyError, ValueError) as ex:
-                    print(f"Invalid command, use 'help' to see supported commands.")
+                    f = ex.args[0]
+                    match = _find_best_match(f, self.commands.keys())
+                    if match:
+                        print(f"Invalid command '{f}', did you mean '{match}'?")
+                    else:
+                        print(f"Invalid command, use 'help' to see supported commands.")
                     print("Please try again.")
                 except KeyboardInterrupt:
                     print("\nGoodbye!")
@@ -43,8 +48,3 @@ class ConsoleBot:
             recall_bot_state(self)
         event_loop = self.event_loop_error_handler(self.bot_event_loop)
         event_loop()
-
-    def _parse_input(self, user_input: str) -> Tuple[str, ...]:
-        cmd, *args = user_input.split()
-        cmd = cmd.strip().lower()
-        return cmd, *args
