@@ -44,7 +44,7 @@ class AddressBook(UserDict):
             address_book.add_record(new_record)
         return address_book
 
-    def get_birthdays_per_week(self, num_of_days: int = 7) -> None:
+    def get_birthdays_per_week(self, num_of_days: int = 7) -> Optional[Dict[str, str]]:
         """Print the birthdays for the next `num_of_days` days."""
         users_with_day_this_week = defaultdict(list)
         updated_users_list = self._get_users_birthday_in_current_year(self.data)
@@ -61,8 +61,8 @@ class AddressBook(UserDict):
             print("No birthdays this week.")
             return
 
-        for day in sorted_days:
-            print(f"{day}: {', '.join(users_with_day_this_week[day])}")
+
+        return {day: ', '.join(users_with_day_this_week[day]) for day in sorted_days}
 
     def find(self, name: str) -> Optional[Record]:
         """Find a record in the address book."""

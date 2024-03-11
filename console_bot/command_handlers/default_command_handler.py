@@ -2,7 +2,7 @@ from typing import Optional, Tuple, Union
 
 from base_handler import BaseCommandHandler
 from console_bot.book_items import Record
-from print_utils import _pprint_notes, _pprint_records
+from print_utils import _pprint_notes, _pprint_records, _print_birthdays
 
 
 def input_error_handler(func):
@@ -54,9 +54,9 @@ class DefaultCommandHandler(BaseCommandHandler):
                                         "add-email": self._add_email,
                                         "add-note": self._add_note,
                                         "add-tags": self._add_tags_to_note,
+                                        "all-notes": self._get_notes,
                                         "delete-contact": self._delete_contact,
                                         "delete-tags": self._delete_tags_from_note,
-                                        "get-notes": self._get_notes,
                                         "remove-contact": self._delete_contact,
                                         "search-contact": self._find_contact,
                                         "search-note": self._find_note,
@@ -207,7 +207,9 @@ class DefaultCommandHandler(BaseCommandHandler):
             number_of_days = 7
         except ValueError:
             raise ValueError("Invalid number of days.")
-        self.bot.address_book.get_birthdays_per_week(number_of_days)
+        result = self.bot.address_book.get_birthdays_per_week(number_of_days)
+        if result:
+            _print_birthdays(result)
 
     def _get_help(self) -> str:
         """Show supported commands."""

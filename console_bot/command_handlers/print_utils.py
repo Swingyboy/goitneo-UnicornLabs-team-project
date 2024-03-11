@@ -26,7 +26,7 @@ def _pprint_records(records: Union[List["Record"], "Record"]):
         records = [records]
 
     for record in records:
-        row = [record.name.value, record.phone.value]
+        row = [record.name.value.capitalize(), record.phone.value]
         if record.birthday:
             row.append(record.birthday.value)
         else:
@@ -43,3 +43,11 @@ def _pprint_records(records: Union[List["Record"], "Record"]):
 
     print(table)
 
+
+def _print_birthdays(records: dict):
+    """Print the birthdays."""
+    table = PrettyTable()
+    table.field_names = ["Day", "Contacts"]
+    for day, contacts in records.items():
+        table.add_row([day, contacts])
+    print(table)

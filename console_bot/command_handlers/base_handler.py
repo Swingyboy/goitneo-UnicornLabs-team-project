@@ -7,7 +7,7 @@ class BaseCommandHandler(ABC):
         self.bot = bot
         self.SUPPORTED_COMMANDS = {"add-contact": self._add_contact,
                                    "add-birthday": self._add_birthday,
-                                   "all": self._get_all,
+                                   "all-contacts": self._get_all,
                                    "birthdays": self._get_birthdays_from_date,
                                    "change-contact": self._change_contact,
                                    "close": self._exit_bot,
