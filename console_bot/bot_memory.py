@@ -2,7 +2,7 @@ import json
 import os
 
 from bot_constants import BOT_STATE_FILE
-from contacts import AddressBook, NoteBook
+from book_items import AddressBook, NoteBook
 
 
 def recall_bot_state(bot: "ConsoleBot"):

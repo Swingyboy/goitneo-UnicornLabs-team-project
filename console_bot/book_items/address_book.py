@@ -3,7 +3,7 @@ from collections import UserDict, defaultdict
 from datetime import datetime
 from typing import Optional, List, Dict, Union
 
-from record import Record
+from fields.record import Record
 
 
 class AddressBook(UserDict):

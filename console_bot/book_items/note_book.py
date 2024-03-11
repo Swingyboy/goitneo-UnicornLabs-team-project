@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import UserList
 from typing import List
-from note import Note, Tag
+from fields import Note, Tag
 
 
 class SortStrategy(ABC):

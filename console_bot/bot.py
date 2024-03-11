@@ -1,7 +1,7 @@
 import sys
 
 from bot_memory import recall_bot_state, save_bot_state
-from contacts import AddressBook, NoteBook
+from book_items import AddressBook, NoteBook
 from utils import _find_best_match, _parse_input
 
 
