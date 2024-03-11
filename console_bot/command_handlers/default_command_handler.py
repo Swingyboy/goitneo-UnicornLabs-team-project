@@ -2,7 +2,7 @@ from typing import Optional, Tuple, Union
 
 from base_handler import BaseCommandHandler
 from console_bot.book_items import Record
-from print_utils import _pprint_notes, _pprint_records, _print_birthdays
+from print_utils import _pprint_notes, _pprint_records, _print_birthdays, _print_help
 
 
 def input_error_handler(func):
@@ -213,21 +213,22 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _get_help(self) -> str:
         """Show supported commands."""
-        return ("Supported commands:\n"
-                "add <name> <phone> [birthday] [email] [address] - add a new contact\n"
-                "add-birthday <name> <birthday> - add birthday to a contact\n"
-                "add-email <name> <email> - add email to a contact\n"
-                "add-address <name> <address> - add address to a contact\n"
-                "all - show all book_items\n"
-                "change <name> [new_phone] [new_birthday] [new_email] [new_address] - change contact\n"
-                "delete <name> - delete contact\n"
-                "exit, close - close the program\n"
-                "hello - display welcome message\n"
-                "phone <name> - show phone number\n"
-                "show-birthday <name> - show birthday\n"
-                "birthdays - show birthdays for the next 7 days\n"
-                "help - show this message\n"
-                )
+        # return ("Supported commands:\n"
+        #         "add <name> <phone> [birthday] [email] [address] - add a new contact\n"
+        #         "add-birthday <name> <birthday> - add birthday to a contact\n"
+        #         "add-email <name> <email> - add email to a contact\n"
+        #         "add-address <name> <address> - add address to a contact\n"
+        #         "all - show all book_items\n"
+        #         "change <name> [new_phone] [new_birthday] [new_email] [new_address] - change contact\n"
+        #         "delete <name> - delete contact\n"
+        #         "exit, close - close the program\n"
+        #         "hello - display welcome message\n"
+        #         "phone <name> - show phone number\n"
+        #         "show-birthday <name> - show birthday\n"
+        #         "birthdays - show birthdays for the next 7 days\n"
+        #         "help - show this message\n"
+        #         )
+        _print_help(self)
 
     @input_error_handler
     def _get_notes(self):

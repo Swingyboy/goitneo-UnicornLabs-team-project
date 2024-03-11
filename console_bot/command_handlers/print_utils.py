@@ -50,4 +50,16 @@ def _print_birthdays(records: dict):
     table.field_names = ["Day", "Contacts"]
     for day, contacts in records.items():
         table.add_row([day, contacts])
+
+    print(table)
+
+
+def _print_help(handler: "BaseCommandHandler"):
+    """Print the help message."""
+    print("Available commands:")
+    table = PrettyTable()
+    table.field_names = ["Command", "Description"]
+    for command, func in handler.SUPPORTED_COMMANDS.items():
+        table.add_row([command, func.__doc__])
+
     print(table)
