@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 from contacts import Record
 from base_handler import BaseCommandHandler
@@ -42,7 +42,7 @@ def input_error_handler(func):
 class DefaultCommandHandler(BaseCommandHandler):
     def __init__(self, bot: "ConsoleBot") -> None:
         super().__init__(bot)
-        self.bot = bot
+        self.bot: "ConsoleBot" = bot
         self.SUPPORTED_COMMANDS.update({"add-address": self._add_address,
                                         "add-email": self._add_email,
                                         "add-note": self._add_note,
@@ -56,10 +56,22 @@ class DefaultCommandHandler(BaseCommandHandler):
                                         }
                                        )
 
+    def __parse_find_params(self, *args) -> Tuple[str, str]:
+        sorted_by: str = "index"
+        order: str = "asc"
+        if args:
+            if "sorted-by" in args:
+                sorted_by = args[args.index("sorted-by") + 1]
+                try:
+                    order = args[args.index("sorted-by") + 2]
+                except IndexError:
+                    pass
+        return sorted_by, order
+
     @input_error_handler
     def _add_address(self, *args) -> str:
         name, address = args
-        result = self._check_contact_exist(name)
+        result: Union[Record, str] = self._check_contact_exist(name)
         if isinstance(result, Record):
             result.add_address(address)
             return f"Address for {name.capitalize()} has been added."
@@ -68,7 +80,7 @@ class DefaultCommandHandler(BaseCommandHandler):
     @input_error_handler
     def _add_birthday(self, *args) -> str:
         name, birthday = args
-        result = self._check_contact_exist(name)
+        result: Union[Record, str] = self._check_contact_exist(name)
         if isinstance(result, Record):
             result.add_birthday(birthday)
             return f"Birthday for {name.capitalize()} has been added."
@@ -78,7 +90,7 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _add_contact(self, *args) -> str:
         name, *user_data = args
         if self.bot.address_book.find(name):
-            change = input(f"Contact {name.capitalize()} already exists. Do you want to change it?")
+            change: str = input(f"Contact {name.capitalize()} already exists. Do you want to change it? ")
             if change.lower() in ["yes", "y"]:
                 return self._change_contact(*args)
             else:
@@ -91,7 +103,7 @@ class DefaultCommandHandler(BaseCommandHandler):
     @input_error_handler
     def _add_email(self, *args) -> str:
         name, email = args
-        result = self._check_contact_exist(name)
+        result: [Record, str] = self._check_contact_exist(name)
         if isinstance(result, Record):
             result.add_email(email)
             return f"Email for {name.capitalize()} has been added."
@@ -110,7 +122,7 @@ class DefaultCommandHandler(BaseCommandHandler):
     @input_error_handler
     def _change_contact(self, *args) -> str:
         name, *user_data = args
-        result = self._check_contact_exist(name)
+        result: Union[Record, str] = self._check_contact_exist(name)
         if isinstance(result, Record):
             result.update_fields_from_tuple(*user_data)
             return f"Contact {name.capitalize()} was updated."
@@ -118,7 +130,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _check_contact_exist(self, name: str) -> Union[Record, str]:
-        record = self.bot.address_book.find(name)
+        record: Optional[Record] = self.bot.address_book.find(name)
         if not record:
             return f"Contact {name.capitalize()} does not exist."
         else:
@@ -127,7 +139,7 @@ class DefaultCommandHandler(BaseCommandHandler):
     @input_error_handler
     def _delete_contact(self, *args) -> str:
         name = args[0]
-        result = self.bot.address_book.delete(name)
+        result: Optional[str] = self.bot.address_book.delete(name)
         if result:
             return f"Contact {name.capitalize()} has been deleted."
         return f"Contact {name.capitalize()} does not exist."
@@ -140,7 +152,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _find_contact(self, by_field: str, value: str) -> str:
-        result = self.bot.address_book.search(by_field, value)
+        result: str = self.bot.address_book.search(by_field, value)
         if result:
             return result
         return f"No contacts found with {by_field} {value}."
@@ -167,6 +179,16 @@ class DefaultCommandHandler(BaseCommandHandler):
             if record.address:
                 res += f"\t{record.address.value}"
             print(res)
+
+    @input_error_handler
+    def _get_birthdays_from_date(self, *args) -> None:
+        try:
+            number_of_days: int = int(args[0])
+        except IndexError:
+            number_of_days = 7
+        except ValueError:
+            raise ValueError("Invalid number of days.")
+        self.bot.address_book.get_birthdays_per_week(number_of_days)
 
     def _get_help(self) -> str:
         return ("Supported commands:\n"
@@ -206,24 +228,8 @@ class DefaultCommandHandler(BaseCommandHandler):
             return f"{name.capitalize()}: {result.birthday.value}"
         return result
 
-    @input_error_handler
-    def _get_birthdays_per_week(self) -> None:
-        self.bot.address_book.get_birthdays_per_week()
-
     def _exit_bot(self) -> str:
         return "Goodbye!"
 
     def _hello_bot(self) -> str:
         return "How can I help you?"
-
-    def __parse_find_params(self, *args) -> Tuple[str, str]:
-        sorted_by = "index"
-        order = "asc"
-        if args:
-            if "sorted-by" in args:
-                sorted_by = args[args.index("sorted-by") + 1]
-                try:
-                    order = args[args.index("sorted-by") + 2]
-                except IndexError:
-                    pass
-        return sorted_by, order

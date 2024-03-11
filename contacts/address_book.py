@@ -38,11 +38,11 @@ class AddressBook(UserDict):
             address_book.add_record(new_record)
         return address_book
 
-    def get_birthdays_per_week(self) -> None:
+    def get_birthdays_per_week(self, num_of_days: int = 7) -> None:
         users_with_day_this_week = defaultdict(list)
         updated_users_list = self._get_users_birthday_in_current_year(self.data)
         for user in updated_users_list:
-            if day := self._estimate_birthday_delta(user):
+            if day := self._estimate_birthday_delta(user, num_of_days):
                 if day.lower() in ["saturday", "sunday"]:
                     users_with_day_this_week["Monday"].append(user.get("name").capitalize())
                 else:
@@ -81,7 +81,7 @@ class AddressBook(UserDict):
             updated_users_list.append({"name": name, "birthday": birthday})
         return updated_users_list
 
-    def _estimate_birthday_delta(self, user: Dict[str, Union[str, datetime]]) -> Optional[str]:
+    def _estimate_birthday_delta(self, user: Dict[str, Union[str, datetime]], from_days: int) -> Optional[str]:
         delta_days = abs((user.get("birthday") - datetime.today().date()).days)
-        if delta_days < 7:
+        if delta_days < from_days:
             return user.get("birthday").strftime("%A")
