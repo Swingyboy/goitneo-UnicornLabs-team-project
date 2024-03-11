@@ -1,15 +1,18 @@
 import sys
 
 from bot_memory import recall_bot_state, save_bot_state
-from book_items import AddressBook, NoteBook
 from utils import _find_best_match, _parse_input
 
 
 class ConsoleBot:
     """A class to represent a console bot."""
-    def __init__(self, command_handler: "BaseCommandHandler") -> None:
-        self.address_book = AddressBook()
-        self.note_book = NoteBook()
+    def __init__(self,
+                 address_book: "AddressBook",
+                 command_handler: "BaseCommandHandler",
+                 note_book: "NoteBook"
+                 ) -> None:
+        self.address_book = address_book
+        self.note_book = note_book
         self.handler = command_handler(self)
         self.commands = self.handler.SUPPORTED_COMMANDS
 
