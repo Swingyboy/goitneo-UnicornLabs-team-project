@@ -23,9 +23,9 @@ def _pprint_records(records: Union[List["Record"], "Record"]):
     table.field_names = ["Name", "Phone", "Birthday", "Email", "Address"]
 
     if not isinstance(records, list):
-        data = [records]
+        records = [records]
 
-    for record in data:
+    for record in records:
         row = [record.name.value, record.phone.value]
         if record.birthday:
             row.append(record.birthday.value)
