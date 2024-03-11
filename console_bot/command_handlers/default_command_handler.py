@@ -170,7 +170,10 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @input_error_handler
     def _get_all(self) -> None:
-        for record in self.bot.address_book.get_all_records():
+        records = self.bot.address_book.get_all_records()
+        if not records:
+            print("The address book is empty.")
+        for record in records:
             res = f"{record.name.value.capitalize()}:\t{record.phone.value}"
             if record.email:
                 res += f"\t{record.email.value}"
