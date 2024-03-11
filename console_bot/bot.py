@@ -47,6 +47,7 @@ class ConsoleBot:
         return inner
 
     def run(self, recall_state=True):
+        """Run the bot."""
         if recall_state:
             recall_bot_state(self)
         event_loop = self.event_loop_error_handler(self.bot_event_loop)

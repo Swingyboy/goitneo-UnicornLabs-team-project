@@ -5,11 +5,11 @@ class BaseCommandHandler(ABC):
     """Base class for command handlers."""
     def __init__(self, bot: "ConsoleBot") -> None:
         self.bot = bot
-        self.SUPPORTED_COMMANDS = {"add": self._add_contact,
+        self.SUPPORTED_COMMANDS = {"add-contact": self._add_contact,
                                    "add-birthday": self._add_birthday,
                                    "all": self._get_all,
                                    "birthdays": self._get_birthdays_from_date,
-                                   "change": self._change_contact,
+                                   "change-contact": self._change_contact,
                                    "close": self._exit_bot,
                                    "exit": self._exit_bot,
                                    "hello": self._hello_bot,

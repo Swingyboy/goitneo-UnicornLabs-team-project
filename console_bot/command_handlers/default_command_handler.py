@@ -37,6 +37,11 @@ def input_error_handler(func):
                 return "Invalid number of arguments for phone command, please try again. Give me name please."
             else:
                 return str(i_ex)
+        except TypeError as t_ex:
+            if func.__name__ == "_search_note":
+                return "Invalid number of arguments for search-note command, please try again. Give me field and value please."
+            else:
+                return str(t_ex)
 
     return inner
 
@@ -49,12 +54,12 @@ class DefaultCommandHandler(BaseCommandHandler):
                                         "add-email": self._add_email,
                                         "add-note": self._add_note,
                                         "add-tags": self._add_tags_to_note,
-                                        "delete": self._delete_contact,
+                                        "delete-contact": self._delete_contact,
                                         "delete-tags": self._delete_tags_from_note,
                                         "get-notes": self._get_notes,
-                                        "remove": self._delete_contact,
-                                        "search": self._find_contact,
-                                        "search-note-by": self._find_note,
+                                        "remove-contact": self._delete_contact,
+                                        "search-contact": self._find_contact,
+                                        "search-note": self._find_note,
                                         }
                                        )
 
@@ -166,11 +171,12 @@ class DefaultCommandHandler(BaseCommandHandler):
         return self.bot.note_book.delete_tags_from_note(note_index, *tags)
 
     @input_error_handler
-    def _find_contact(self, by_field: str, value: str) -> str:
+    def _find_contact(self, by_field: str, value: str) -> Optional[str]:
         """Find a contact by a given field and value."""
         result: Optional[str] = self.bot.address_book.search(by_field, value)
         if result:
-            return result
+            _pprint_records(result)
+            return
         return f"No book_items found with {by_field} {value}."
 
     @input_error_handler
@@ -180,8 +186,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         result = self.bot.note_book.search(by_field, value, sorted_by, order)
         if result:
             return_str = ""
-            for note in result:
-                return_str += f"Index: {note.index}\nMessage: {note.text.value}\nTags: {', '.join([tag.value for tag in note.tags])}\n"
+            _pprint_notes(result)
             return return_str
         return f"No notes found with {by_field} {value}."
 
