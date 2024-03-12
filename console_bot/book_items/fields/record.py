@@ -48,6 +48,10 @@ class Record:
         """Update the email of the record."""
         self.add_email(new_email)
 
+    def update_name(self, new_name: str) -> None:
+        """Update the name of the record."""
+        self.name = Name(new_name)
+
     def update_phone(self, new_phone: str) -> None:
         """Update the phone of the record."""
         self.add_phone(new_phone)
