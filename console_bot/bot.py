@@ -1,4 +1,5 @@
 import sys
+from prompt_toolkit import PromptSession
 
 from bot_memory import recall_bot_state, save_bot_state
 from utils import _find_best_match, _parse_input
@@ -15,11 +16,12 @@ class ConsoleBot:
         self.note_book = note_book
         self.handler = command_handler(self)
         self.commands = self.handler.SUPPORTED_COMMANDS
+        self.prmt_session = PromptSession()
 
     def bot_event_loop(self):
         """The main event loop for the bot."""
         while True:
-            user_input = input("Enter a command: ").strip().lower()
+            user_input = self.prmt_session.prompt("Enter a command: ").strip().lower()
             command, *args = _parse_input(user_input)
             result = self.commands[command](*args)
             if result:
