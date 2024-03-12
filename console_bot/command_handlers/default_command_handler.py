@@ -41,7 +41,8 @@ def input_error_handler(func):
             if func.__name__ == "_search_note":
                 return "Invalid number of arguments for search-note command, please try again. Give me field and value please."
             else:
-                return str(t_ex)
+                # return str(t_ex)
+                raise t_ex
 
     return inner
 
@@ -50,18 +51,6 @@ class DefaultCommandHandler(BaseCommandHandler):
     def __init__(self, bot: "ConsoleBot") -> None:
         super().__init__(bot)
         self.bot: "ConsoleBot" = bot
-        self.SUPPORTED_COMMANDS.update({"add-address": self._add_address,
-                                        "add-email": self._add_email,
-                                        "add-note": self._add_note,
-                                        "add-tags": self._add_tags_to_note,
-                                        "all-notes": self._get_notes,
-                                        "delete-contact": self._delete_contact,
-                                        "delete-tags": self._delete_tags_from_note,
-                                        "remove-contact": self._delete_contact,
-                                        "search-contact": self._find_contact,
-                                        "search-note": self._find_note,
-                                        }
-                                       )
 
     def __parse_find_params(self, *args) -> Tuple[str, str]:
         """Parse the sorted-by and order parameters from the input."""
@@ -75,6 +64,51 @@ class DefaultCommandHandler(BaseCommandHandler):
                 except IndexError:
                     pass
         return sorted_by, order
+
+    def _add(self, *args) -> str:
+        """Add a new item to the address book or notebook."""
+        if args[0] == "contact":
+            return self._add_contact()
+        elif args[0] == "note":
+            return self._add_note(*args[1:])
+        else:
+            return "Invalid command, please try again."
+
+    def _get(self, *args) -> str:
+        """Get an item from the address book or notebook."""
+        if args[0] == "contact":
+            return self._find_contact(*args[1:])
+        elif args[0] == "note":
+            return self._find_note(*args[1:])
+        else:
+            return "Invalid command, please try again."
+
+    def _get_all(self, *args) -> None:
+        """Show all items in the address book or notebook."""
+        if args[0] == "contacts":
+            self._get_contacts()
+        elif args[0] == "notes":
+            self._get_notes()
+        else:
+            print("Invalid command, please try again.")
+
+    def _update(self, *args) -> str:
+        """Update an item in the address book or notebook."""
+        if args[0] == "contact":
+            return self._change_contact(args[1])
+        elif args[0] == "note":
+            return self._change_note(args[1])
+        else:
+            return "Invalid command, please try again."
+
+    def _delete(self, *args) -> str:
+        """Delete an item from the address book or notebook."""
+        if args[0] == "contact":
+            return self._delete_contact(*args[1:])
+        elif args[0] == "note":
+            return self._delete_note(*args[1:])
+        else:
+            return "Invalid command, please try again."
 
     @input_error_handler
     def _add_address(self, *args) -> str:
@@ -99,17 +133,28 @@ class DefaultCommandHandler(BaseCommandHandler):
         return result
 
     @input_error_handler
-    def _add_contact(self, *args) -> str:
+    def _add_contact(self) -> str:
         """Add a new contact to the address book."""
-        name, *user_data = args
-        if self.bot.address_book.find(name):
-            change: str = input(f"Contact {name.capitalize()} already exists. Do you want to change it? ")
+        name = self.bot.session.prompt("Enter name: ")
+        if record := self.bot.address_book.find(name):
+            change: str = self.bot.prmt_session.promt(f"Contact {name.capitalize()} already exists. Do you want to change it? ", default="no")
             if change.lower() in ["yes", "y"]:
-                return self._change_contact(*args)
+                return self._change_contact(record.name.value)
             else:
                 self._hello_bot()
         else:
-            record = Record.from_tuple(name, *user_data)
+            record = Record(name)
+            phone = self.bot.prmt_session.prompt("Enter phone: ")
+            record.add_phone(phone)
+            email = self.bot.prmt_session.prompt("Enter email: ")
+            if email:
+                record.add_email(email)
+            address = self.bot.prmt_session.prompt("Enter address: ")
+            if address:
+                record.add_address(address)    
+            birthday = self.bot.prmt_session.prompt("Enter birthday: ")
+            if birthday:
+                record.add_birthday(birthday)
             self.bot.address_book.add_record(record)
             return f"Contact {name.capitalize()} has been added."
 
@@ -136,14 +181,30 @@ class DefaultCommandHandler(BaseCommandHandler):
         return self.bot.note_book.add_tags_to_note(note_index, *tags)
 
     @input_error_handler
-    def _change_contact(self, *args) -> str:
-        """Change contact data."""
-        name, *user_data = args
-        result: Union["Record", str] = self._check_contact_exist(name)
-        if not isinstance(result, str):
-            result.update_fields_from_tuple(*user_data)
+    def _change_contact(self, name) -> str:
+        """Update contact data."""
+        result: Union[Record, str] = self._check_contact_exist(name)
+        if isinstance(result, Record):
+            update_func = {"phone": result.update_phone,
+                           "email": result.update_email,
+                           "address": result.update_address, 
+                           "birthday": result.update_birthday, 
+                           "name": result.update_name
+                           }
+            while True:
+                field, value = self.bot.session.prompt("Specify field and value to update: ").split(" ")
+                if field in ["phone", "email", "address", "birthday", "name"]:
+                    update_func[field](value)
+                    print (f"Field {field} for contact {name.capitalize()} was updated.")
+                    resp = self.bot.session.prompt("Do you want to update another field? ", default="no")
+                    if resp.lower() in ["no", "n"]:
+                        break
             return f"Contact {name.capitalize()} was updated."
         return result
+
+    @input_error_handler
+    def _change_note(self, *args) -> str:
+        ...
 
     @input_error_handler
     def _check_contact_exist(self, name: str) -> Union[Record, str]:
@@ -162,6 +223,10 @@ class DefaultCommandHandler(BaseCommandHandler):
         if result:
             return f"Contact {name.capitalize()} has been deleted."
         return f"Contact {name.capitalize()} does not exist."
+
+    @input_error_handler
+    def _delete_note(self, *args) -> str:
+        ...
 
     @input_error_handler
     def _delete_tags_from_note(self, *args) -> str:
@@ -191,7 +256,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         return f"No notes found with {by_field} {value}."
 
     @input_error_handler
-    def _get_all(self) -> None:
+    def _get_contacts(self) -> None:
         """Show all book_items in the address book."""
         records = self.bot.address_book.get_all_records()
         if not records:
@@ -211,23 +276,8 @@ class DefaultCommandHandler(BaseCommandHandler):
         if result:
             _print_birthdays(result)
 
-    def _get_help(self) -> str:
+    def _get_help(self) -> None:
         """Show supported commands."""
-        # return ("Supported commands:\n"
-        #         "add <name> <phone> [birthday] [email] [address] - add a new contact\n"
-        #         "add-birthday <name> <birthday> - add birthday to a contact\n"
-        #         "add-email <name> <email> - add email to a contact\n"
-        #         "add-address <name> <address> - add address to a contact\n"
-        #         "all - show all book_items\n"
-        #         "change <name> [new_phone] [new_birthday] [new_email] [new_address] - change contact\n"
-        #         "delete <name> - delete contact\n"
-        #         "exit, close - close the program\n"
-        #         "hello - display welcome message\n"
-        #         "phone <name> - show phone number\n"
-        #         "show-birthday <name> - show birthday\n"
-        #         "birthdays - show birthdays for the next 7 days\n"
-        #         "help - show this message\n"
-        #         )
         _print_help(self)
 
     @input_error_handler
