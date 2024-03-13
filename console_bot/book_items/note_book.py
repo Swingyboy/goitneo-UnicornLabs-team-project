@@ -89,11 +89,11 @@ class NoteBook(UserList):
             idx = len(self.data) - 1
         self.data[idx].text.value = new_text
 
-    def delete_note(self, idx: int = None) -> None:
+    def delete_note(self, idx: int = None) -> bool:
         """Delete a note."""
-        if not idx:
-            idx = len(self.data) - 1
-        self.data.pop(idx)
+        if note := self.data.pop(idx - 1):
+            return True
+        return False
 
     def delete_tags_from_note(self, index, *tags) -> str:
         """Delete tags from a note."""
