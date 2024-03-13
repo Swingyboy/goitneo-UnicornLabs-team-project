@@ -52,6 +52,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         super().__init__(bot)
         self.bot: "ConsoleBot" = bot
 
+
     def __parse_find_params(self, *args) -> Tuple[str, str]:
         """Parse the sorted-by and order parameters from the input."""
         sorted_by: str = "index"
@@ -73,6 +74,15 @@ class DefaultCommandHandler(BaseCommandHandler):
             return self._add_note(*args[1:])
         else:
             return "Invalid command, please try again."
+        
+    def _delete(self, *args) -> str:
+        """Delete an item from the address book or notebook."""
+        if args[0] == "contact":
+            return self._delete_contact()
+        elif args[0] == "note":
+            return self._delete_note()
+        else:
+            return "Invalid command, please try again."
 
     def _get(self, *args) -> str:
         """Get an item from the address book or notebook."""
@@ -85,9 +95,9 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _get_all(self, *args) -> None:
         """Show all items in the address book or notebook."""
-        if args[0] == "contacts":
+        if args[0] == "contact":
             self._get_contacts()
-        elif args[0] == "notes":
+        elif args[0] == "note":
             self._get_notes()
         else:
             print("Invalid command, please try again.")
@@ -95,18 +105,12 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _update(self, *args) -> str:
         """Update an item in the address book or notebook."""
         if args[0] == "contact":
-            return self._change_contact(args[1])
+            if len(args) > 1:
+                return self._change_contact(args[1])
+            else:
+                return self._change_contact()
         elif args[0] == "note":
             return self._change_note(args[1])
-        else:
-            return "Invalid command, please try again."
-
-    def _delete(self, *args) -> str:
-        """Delete an item from the address book or notebook."""
-        if args[0] == "contact":
-            return self._delete_contact(*args[1:])
-        elif args[0] == "note":
-            return self._delete_note(*args[1:])
         else:
             return "Invalid command, please try again."
 
@@ -149,8 +153,10 @@ class DefaultCommandHandler(BaseCommandHandler):
         return self.bot.note_book.add_tags_to_note(note_index, *tags)
 
     @input_error_handler
-    def _change_contact(self, name) -> str:
+    def _change_contact(self, name: Optional[str] = None) -> str:
         """Update contact data."""
+        if not name:
+            name = self.bot.prmt_session.prompt("Enter the name of the contact you want to edit:")
         result: Optional[Record] = self._check_contact_exist(name)
         if result:
             update_func = {"phone": result.update_phone,
@@ -160,7 +166,7 @@ class DefaultCommandHandler(BaseCommandHandler):
                            "name": result.update_name
                            }
             while True:
-                field = self.bot.prmt_session.prompt("Specify field to update: ")
+                field = self.bot.prmt_session.prompt("Specify field you want to update: ")
                 value = self.bot.prmt_session.prompt(f"Enter new {field}: ")
                 if field in ["phone", "email", "address", "birthday", "name"]:
                     update_func[field](value)
@@ -185,16 +191,16 @@ class DefaultCommandHandler(BaseCommandHandler):
             return record
 
     @input_error_handler
-    def _delete_contact(self, *args) -> str:
+    def _delete_contact(self) -> str:
         """Delete a contact from the address book."""
-        name = args[0]
+        name = self.bot.prmt_session.prompt("Enter the name of the contact you want to delete: ")
         result: bool = self.bot.address_book.delete(name)
         if result:
             return f"Contact {name.capitalize()} has been deleted."
         return f"Contact {name.capitalize()} does not exist."
 
     @input_error_handler
-    def _delete_note(self, *args) -> str:
+    def _delete_note(self) -> str:
         ...
 
     @input_error_handler
@@ -205,13 +211,15 @@ class DefaultCommandHandler(BaseCommandHandler):
         return self.bot.note_book.delete_tags_from_note(note_index, *tags)
 
     @input_error_handler
-    def _find_contact(self, by_field: str, value: str) -> Optional[str]:
+    def _find_contact(self) -> Optional[str]:
         """Find a contact by a given field and value."""
-        result: Optional[str] = self.bot.address_book.search(by_field, value)
+        by_field = self.bot.prmt_session.prompt("Enter field to search by: ")
+        value = self.bot.prmt_session.prompt(f"Enter expected {by_field} value: ")
+        result: Optional[str] = self.bot.address_book.search(by_field.lower(), value)
         if result:
             _pprint_records(result)
             return
-        return f"No book_items found with {by_field} {value}."
+        return f"No contacts found with {by_field} {value}."
 
     @input_error_handler
     def _find_note(self, by_field: str, value: str, *args) -> str:
@@ -248,29 +256,6 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _get_help(self) -> None:
         """Show supported commands."""
         _print_help(self)
-
-    @input_error_handler
-    def _get_notes(self):
-        """Show all notes in the notebook."""
-        _pprint_notes(self.bot.note_book.data)
-
-    @input_error_handler
-    def _get_phone(self, *args) -> str:
-        """Show phone number for a contact."""
-        name = args[0]
-        result = self._check_contact_exist(name)
-        if not isinstance(result, str):
-            return f"{name.capitalize()}: {result.phone.value}"
-        return result
-
-    @input_error_handler
-    def _show_birthday(self, *args) -> str:
-        """Show birthday for a contact."""
-        name = args[0]
-        result: Optional["Record"] = self.bot.address_book.find(name)
-        if result:
-            return f"{name.capitalize()}: {result.birthday.value}"
-        return f"The birthday date is not specified for {name.capitalize()} contact."
 
     def _exit_bot(self) -> str:
         """Exit the bot."""
