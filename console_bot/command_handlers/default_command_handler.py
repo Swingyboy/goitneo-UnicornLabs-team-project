@@ -152,6 +152,7 @@ class DefaultCommandHandler(BaseCommandHandler):
                     value = self.bot.prmt_session.prompt("Enter new tags separated by commas: ")
                     if value:
                         value = value.split(",")
+                        value = [tag.strip() for tag in value]
                 else:
                     raise ValueError("Invalid field.")
                 update_func[field](value)
@@ -291,7 +292,13 @@ class DefaultCommandHandler(BaseCommandHandler):
     @input_error_handler
     def _get_notes(self) -> None:
         """Show all notes in the notebook."""
-        notes = self.bot.note_book.get_all_notes()
+        apply_sort = self.bot.prmt_session.prompt("Do you want to sort the notes? ", default="no")
+        if apply_sort.lower() in ["yes", "y"]:
+            sort_by = self.bot.prmt_session.prompt("Enter sort attribute (index/text/tag): ")
+            order = self.bot.prmt_session.prompt("Enter order (asc/desc): ", default="asc")
+            notes = self.bot.note_book.sort(sort_by, order)
+        else:
+            notes = self.bot.note_book.get_all_notes()
         if not notes:
             print("The notebook is empty.")
         _pprint_notes(notes)
