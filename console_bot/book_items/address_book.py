@@ -16,7 +16,7 @@ class AddressBook(UserDict):
         """Add a record to the address book."""
         self.data[record.name.value] = record
 
-    def delete(self, name: str) -> bool:
+    def delete_record(self, name: str) -> bool:
         """Delete a record from the address book."""
         record = self.find(name)
         if record:
