@@ -1,10 +1,10 @@
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 import re
 
 
 def _find_best_match(input_value: str, str_list: List[str]) -> Optional[str]:
     """Find the best match for the input_value in the list of strings."""
-    best_match: Optional = None
+    best_match: Optional[Any] = None
     best_score: int = 0  # Initialize to 0 for matching pattern
 
     pattern = re.compile(input_value)
