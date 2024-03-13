@@ -5,7 +5,7 @@ from prettytable import PrettyTable
 def _pprint_notes(notes: Union[List["Note"], "Note"]):
     """Pretty print the notes"""
     table = PrettyTable()
-    table.field_names = ["Index", "Summary", "Message", "Tags"]
+    table.field_names = ["Index", "Summary", "Text", "Tags"]
 
     if not isinstance(notes, list):
         notes = [notes]
