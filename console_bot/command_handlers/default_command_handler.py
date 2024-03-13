@@ -140,9 +140,9 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _get_all(self, *args) -> None:
         """Show all items in the address book or notebook."""
-        if args[0] == "contact":
+        if args[0] == "contacts":
             self._get_contacts()
-        elif args[0] == "note":
+        elif args[0] == "notes":
             self._get_notes()
         else:
             print("Invalid command, please try again.")
@@ -232,14 +232,19 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _delete_contact(self) -> str:
         """Delete a contact from the address book."""
         name = self.bot.prmt_session.prompt("Enter the name of the contact you want to delete: ")
-        result: bool = self.bot.address_book.delete(name)
+        result: bool = self.bot.address_book.delete_record(name)
         if result:
             return f"Contact {name.capitalize()} has been deleted."
         return f"Contact {name.capitalize()} does not exist."
 
     @input_error_handler
     def _delete_note(self) -> str:
-        ...
+        """Delete a note from the notebook."""
+        index = self.bot.prmt_session.prompt("Enter the index of the note you want to delete: ")
+        index = int(index)
+        if self.bot.note_book.delete_note(index):
+            return f"Note {index} has been deleted."
+        return f"Note {index} does not exist."
 
     @input_error_handler
     def _delete_tags_from_note(self, *args) -> str:
