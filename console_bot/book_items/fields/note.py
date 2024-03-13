@@ -6,8 +6,9 @@ class Note:
     """A note with a message and tags."""
     _index = 0
 
-    def __init__(self, text: str, tags: List[str] = None) -> None:
+    def __init__(self, summary: str, text: str, tags: List[str] = None) -> None:
         """Initialize the note with a message and tags."""
+        self.summary = Text(summary)
         self.text = Text(text)
         self.tags = [Tag(tag) for tag in tags] if tags else []
         Note._index += 1
@@ -26,12 +27,12 @@ class Note:
 
     def to_dict(self) -> dict:
         """Convert the note to a dictionary."""
-        return {"text": self.text.value, "tags": [tag.value for tag in self.tags]}
+        return {"summary": self.summary.value,"text": self.text.value, "tags": [tag.value for tag in self.tags]}
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Note":
+    def from_dict(cls, **kwargs) -> "Note":
         """Create a note from a dictionary."""
-        return cls(data["text"], data["tags"])
+        return cls(kwargs["summary"], kwargs["text"], tags=kwargs["tags"] if "tags" in kwargs else None)
 
     @classmethod
     def from_tuple(cls, *data) -> "Note":
