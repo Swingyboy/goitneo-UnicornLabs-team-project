@@ -143,7 +143,14 @@ class DefaultCommandHandler(BaseCommandHandler):
     @input_error_handler
     def _add_note(self, *args) -> str:
         """Add a new note to the notebook."""
-        self.bot.note_book.new_note(*args)
+        summary = self.bot.prmt_session.prompt("Enter the note summary: ")
+        text = self.bot.prmt_session.prompt("Enter the note text: ")
+        tags = self.bot.prmt_session.prompt("Enter tags separated by commas: ")
+        if tags:
+            tags = tags.split(",")
+        else:
+            tags = None
+        self.bot.note_book.add_note(summary=summary, text=text, tags=tags)
         return "Note has been added."
 
     def _add_tags_to_note(self, *args) -> str:
@@ -252,6 +259,14 @@ class DefaultCommandHandler(BaseCommandHandler):
         result = self.bot.address_book.get_birthdays_per_week(number_of_days)
         if result:
             _print_birthdays(result)
+
+    @input_error_handler
+    def _get_notes(self) -> None:
+        """Show all notes in the notebook."""
+        notes = self.bot.note_book.get_all_notes()
+        if not notes:
+            print("The notebook is empty.")
+        _pprint_notes(notes)
 
     def _get_help(self) -> None:
         """Show supported commands."""
