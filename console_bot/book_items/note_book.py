@@ -108,7 +108,7 @@ class NoteBook(UserList):
         """Delete notes by tag."""
         self.data = [note for note in self.data if tag not in note.tags]
 
-    def get_all_notes(self) -> List[Note]:
+    def get_all_notes(self, sorted_by: str = None, order: str = "asc") -> List[Note]:
         """Return all notes."""
         if not self.data:
             return []
@@ -126,6 +126,20 @@ class NoteBook(UserList):
             return self.search_by_tag(query)
         elif by == "text":
             return self.search_note(query)
+        elif by == "index":
+            return self.search_by_index(int(query))
+        elif by == "summary":
+            return self.search_by_summary(query)
+        else:
+            raise ValueError(f"Invalid search attribute: {by}")
+        
+    def search_by_index(self, index: int) -> list:
+        """Search for a note by index."""
+        return [note for note in self.data if note.index == index]
+    
+    def search_by_summary(self, summary: str) -> list:
+        """Search for a note by summary."""
+        return [note for note in self.data if summary in note.summary.value]
 
     def search_note(self, query: str) -> list:
         """Search for a note by text."""
@@ -133,7 +147,12 @@ class NoteBook(UserList):
 
     def search_by_tag(self, tag: str) -> list:
         """Search for a note by tag."""
-        return [note for note in self.data if tag in [t.value for t in note.tags]]
+        res = []
+        for note in self.data:
+            note_tags = [t.value for t in note.tags]
+            if tag in note_tags:
+                res.append(note)
+        return res
 
     def to_dict(self) -> List[dict]:
         """Convert the notebook to a dictionary."""
