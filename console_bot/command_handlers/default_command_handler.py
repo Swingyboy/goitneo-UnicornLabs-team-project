@@ -111,33 +111,11 @@ class DefaultCommandHandler(BaseCommandHandler):
             return "Invalid command, please try again."
 
     @input_error_handler
-    def _add_address(self, *args) -> str:
-        """Add address to a contact."""
-        name, address = args
-        result: Union["Record", str] = self._check_contact_exist(name)
-        if not isinstance(result, str):
-            result.add_address(address)
-            return f"Address for {name.capitalize()} has been added."
-        return result
-
-    @input_error_handler
-    def _add_birthday(self, *args) -> str:
-        """Add birthday to a contact.
-        Format should be "DD.MM.YYYY".
-        """
-        name, birthday = args
-        result: Union["Record", str] = self._check_contact_exist(name)
-        if not isinstance(result, str):
-            result.add_birthday(birthday)
-            return f"Birthday for {name.capitalize()} has been added."
-        return result
-
-    @input_error_handler
     def _add_contact(self) -> str:
         """Add a new contact to the address book."""
-        name = self.bot.session.prompt("Enter name: ")
+        name = self.bot.prmt_session.prompt("Enter name: ")
         if record := self.bot.address_book.find(name):
-            change: str = self.bot.prmt_session.promt(f"Contact {name.capitalize()} already exists. Do you want to change it? ", default="no")
+            change: str = self.bot.prmt_session.prompt(f"Contact {name.capitalize()} already exists. Do you want to change it? ", default="no")
             if change.lower() in ["yes", "y"]:
                 return self._change_contact(record.name.value)
             else:
@@ -159,16 +137,6 @@ class DefaultCommandHandler(BaseCommandHandler):
             return f"Contact {name.capitalize()} has been added."
 
     @input_error_handler
-    def _add_email(self, *args) -> str:
-        """Add email to a contact."""
-        name, email = args
-        result: ["Record", str] = self._check_contact_exist(name)
-        if not isinstance(result, str):
-            result.add_email(email)
-            return f"Email for {name.capitalize()} has been added."
-        return result
-
-    @input_error_handler
     def _add_note(self, *args) -> str:
         """Add a new note to the notebook."""
         self.bot.note_book.new_note(*args)
@@ -183,8 +151,8 @@ class DefaultCommandHandler(BaseCommandHandler):
     @input_error_handler
     def _change_contact(self, name) -> str:
         """Update contact data."""
-        result: Union[Record, str] = self._check_contact_exist(name)
-        if isinstance(result, Record):
+        result: Optional[Record] = self._check_contact_exist(name)
+        if result:
             update_func = {"phone": result.update_phone,
                            "email": result.update_email,
                            "address": result.update_address, 
@@ -192,11 +160,12 @@ class DefaultCommandHandler(BaseCommandHandler):
                            "name": result.update_name
                            }
             while True:
-                field, value = self.bot.session.prompt("Specify field and value to update: ").split(" ")
+                field = self.bot.prmt_session.prompt("Specify field to update: ")
+                value = self.bot.prmt_session.prompt(f"Enter new {field}: ")
                 if field in ["phone", "email", "address", "birthday", "name"]:
                     update_func[field](value)
                     print (f"Field {field} for contact {name.capitalize()} was updated.")
-                    resp = self.bot.session.prompt("Do you want to update another field? ", default="no")
+                    resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
                     if resp.lower() in ["no", "n"]:
                         break
             return f"Contact {name.capitalize()} was updated."
@@ -207,11 +176,11 @@ class DefaultCommandHandler(BaseCommandHandler):
         ...
 
     @input_error_handler
-    def _check_contact_exist(self, name: str) -> Union[Record, str]:
+    def _check_contact_exist(self, name: str) -> Optional[Record]:
         """Check if the contact exists in the address book."""
         record: Optional["Record"] = self.bot.address_book.find(name)
         if not record:
-            return f"Contact {name.capitalize()} does not exist."
+            print(f"Contact {name.capitalize()} does not exist.")
         else:
             return record
 
