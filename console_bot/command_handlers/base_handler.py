@@ -7,18 +7,15 @@ class BaseCommandHandler(ABC):
     def __init__(self, bot: "ConsoleBot") -> None:
         self.bot = bot
         self.SUPPORTED_COMMANDS = {"add": self._add,
+                                   "edit": self._update,
                                    "close": self._exit_bot,
                                    "delete": self._delete,
                                    "exit": self._exit_bot,
-                                   "get": self._get,
+                                   "search": self._get,
                                    "get-all": self._get_all,
                                    "help": self._get_help,
                                    "hello": self._hello_bot,
-                                   "update": self._update,
-
-
-
-
+                                   "remove": self._delete
                                    }
 
     @abstractmethod
