@@ -161,7 +161,7 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _change_contact(self, name: Optional[str] = None) -> str:
         """Update contact data."""
         if not name:
-            name = self.bot.prmt_session.prompt("Enter the name of the contact you want to edit:")
+            name = self.bot.prmt_session.prompt("Enter the name of the contact you want to edit: ")
         if result := self._check_contact_exist(name):
             update_func = {"phone": result.update_phone,
                            "email": result.update_email,
