@@ -5,14 +5,14 @@ from prettytable import PrettyTable
 def _pprint_notes(notes: Union[List["Note"], "Note"]):
     """Pretty print the notes"""
     table = PrettyTable()
-    table.field_names = ["Index", "Message", "Tags"]
+    table.field_names = ["Index", "Summary", "Message", "Tags"]
 
     if not isinstance(notes, list):
         notes = [notes]
 
     for note in notes:
         tags = ', '.join([tag.value for tag in note.tags])
-        table.add_row([note.index, note.text.value, tags])
+        table.add_row([note.index, note.summary.value, note.text.value, tags])
 
     print(table)
 
