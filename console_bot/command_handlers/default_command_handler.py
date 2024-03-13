@@ -52,33 +52,21 @@ class DefaultCommandHandler(BaseCommandHandler):
         super().__init__(bot)
         self.bot: "ConsoleBot" = bot
 
-
-    def __parse_find_params(self, *args) -> Tuple[str, str]:
-        """Parse the sorted-by and order parameters from the input."""
-        sorted_by: str = "index"
-        order: str = "asc"
-        if args:
-            if "sorted-by" in args:
-                sorted_by = args[args.index("sorted-by") + 1]
-                try:
-                    order = args[args.index("sorted-by") + 2]
-                except IndexError:
-                    pass
-        return sorted_by, order
-
     def _add(self, *args) -> str:
         """Add a new item to the address book or notebook."""
-        if args[0] == "contact":
-            return self._add_contact()
-        elif args[0] == "note":
-            return self._add_note()
+        command = args[0].lower()
+        if command == "contact":
+            return self._add_contact(*args[1:])
+        elif command == "note":
+            return self._add_note(*args[1:])
         else:
             return "Invalid command, please try again."
         
     @input_error_handler
-    def _add_contact(self) -> str:
+    def _add_contact(self, name: str = None) -> str:
         """Add a new contact to the address book."""
-        name = self.bot.prmt_session.prompt("Enter name: ")
+        if not name:
+            name = self.bot.prmt_session.prompt("Enter name: ")
         if record := self.bot.address_book.find(name):
             change: str = self.bot.prmt_session.prompt(f"Contact {name.capitalize()} already exists. Do you want to change it? ", default="no")
             if change.lower() in ["yes", "y"]:
@@ -102,13 +90,15 @@ class DefaultCommandHandler(BaseCommandHandler):
             return f"Contact {name.capitalize()} has been added."
 
     @input_error_handler
-    def _add_note(self) -> str:
+    def _add_note(self, summary: str = None) -> str:
         """Add a new note to the notebook."""
-        summary = self.bot.prmt_session.prompt("Enter the note summary: ")
+        if not summary:
+            summary = self.bot.prmt_session.prompt("Enter the note summary: ")
         text = self.bot.prmt_session.prompt("Enter the note text: ")
         tags = self.bot.prmt_session.prompt("Enter tags separated by commas: ")
         if tags:
             tags = tags.split(",")
+            tags = [tag.strip() for tag in tags]
         else:
             tags = None
         self.bot.note_book.add_note(summary=summary, text=text, tags=tags)
@@ -119,48 +109,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         note_index, *tags = args
         note_index = int(note_index) - 1  # Note count starts from 1
         return self.bot.note_book.add_tags_to_note(note_index, *tags)
-        
-    def _delete(self, *args) -> str:
-        """Delete an item from the address book or notebook."""
-        command = args[0]
-        if command == "contact":
-            return self._delete_contact(*args[1:])
-        elif command == "note":
-            return self._delete_note(*args[1:])
-        else:
-            return "Invalid command, please try again."
-
-    def _get(self, *args) -> str:
-        """Get an item from the address book or notebook."""
-        if args[0] == "contact":
-            return self._find_contact(*args[1:])
-        elif args[0] == "note":
-            return self._find_note(*args[1:])
-        else:
-            return "Invalid command, please try again."
-
-    def _get_all(self, *args) -> None:
-        """Show all items in the address book or notebook."""
-        command = args[0]
-        if command == "contacts":
-            self._get_contacts()
-        elif command == "notes":
-            self._get_notes()
-        elif command == "birthdays":
-            self._get_birthdays_from_date(*args[1:])
-        else:
-            print("Invalid command, please try again.")
-
-    def _update(self, *args) -> str:
-        """Update an item in the address book or notebook."""
-        command = args[0]
-        if command == "contact":
-            return self._change_contact(*args[1:])
-        elif command == "note":
-            return self._change_note(*args[1:])
-        else:
-            return "Invalid command, please try again."
-
+    
     @input_error_handler
     def _change_contact(self, name: Optional[str] = None) -> str:
         """Update contact data."""
@@ -231,7 +180,17 @@ class DefaultCommandHandler(BaseCommandHandler):
             return note
         except IndexError:
             return f"Note with index {index} does not exist."
-
+        
+    def _delete(self, *args) -> str:
+        """Delete an item from the address book or notebook."""
+        command = args[0].lower()
+        if command == "contact":
+            return self._delete_contact(*args[1:])
+        elif command == "note":
+            return self._delete_note(*args[1:])
+        else:
+            return "Invalid command, please try again."
+        
     @input_error_handler
     def _delete_contact(self, name: str = None) -> str:
         """Delete a contact from the address book."""
@@ -258,7 +217,11 @@ class DefaultCommandHandler(BaseCommandHandler):
         note_index, *tags = args
         note_index = int(note_index) - 1  # Note count starts from 1
         return self.bot.note_book.delete_tags_from_note(note_index, *tags)
-
+    
+    def _exit_bot(self) -> str:
+        """Exit the bot."""
+        return "Goodbye!"
+    
     @input_error_handler
     def _find_contact(self) -> Optional[str]:
         """Find a contact by a given field and value."""
@@ -271,16 +234,39 @@ class DefaultCommandHandler(BaseCommandHandler):
         return f"No contacts found with {by_field} {value}."
 
     @input_error_handler
-    def _find_note(self, by_field: str, value: str, *args) -> str:
+    def _find_note(self) -> str:
         """Find a note by a given field and value."""
-        sorted_by, order = self.__parse_find_params(*args)
-        result = self.bot.note_book.search(by_field, value, sorted_by, order)
+        by_field = self.bot.prmt_session.prompt("Enter field to search by: ")
+        value = self.bot.prmt_session.prompt(f"Enter expected {by_field} value: ")
+        order = self.bot.prmt_session.prompt("Enter order (asc/desc): ", default="asc")
+        result = self.bot.note_book.search(by_field, value, by_field, order)
         if result:
             return_str = ""
             _pprint_notes(result)
             return return_str
         return f"No notes found with {by_field} {value}."
 
+    def _get(self, *args) -> str:
+        """Get an item from the address book or notebook."""
+        if args[0].lower() == "contact":
+            return self._find_contact()
+        elif args[0].lower() == "note":
+            return self._find_note()
+        else:
+            return "Invalid command, please try again."
+
+    def _get_all(self, *args) -> None:
+        """Show all items in the address book or notebook."""
+        command = args[0]
+        if command == "contacts":
+            self._get_contacts()
+        elif command == "notes":
+            self._get_notes()
+        elif command == "birthdays":
+            self._get_birthdays_from_date(*args[1:])
+        else:
+            print("Invalid command, please try again.")
+    
     @input_error_handler
     def _get_contacts(self) -> None:
         """Show all book_items in the address book."""
@@ -314,9 +300,15 @@ class DefaultCommandHandler(BaseCommandHandler):
         """Show supported commands."""
         _print_help(self)
 
-    def _exit_bot(self) -> str:
-        """Exit the bot."""
-        return "Goodbye!"
+    def _update(self, *args) -> str:
+        """Update an item in the address book or notebook."""
+        command = args[0].lower()
+        if command == "contact":
+            return self._change_contact(*args[1:])
+        elif command == "note":
+            return self._change_note(*args[1:])
+        else:
+            return "Invalid command, please try again."
 
     def _hello_bot(self) -> str:
         """Greet the bot."""
