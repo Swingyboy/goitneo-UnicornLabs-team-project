@@ -1,12 +1,12 @@
 from typing import Optional, Tuple, Union
-
 from base_handler import BaseCommandHandler
 from console_bot.book_items import Record
 from print_utils import _pprint_notes, _pprint_records, _print_birthdays, _print_help
-
+from functools import wraps
 
 def input_error_handler(func):
     """A decorator to handle input errors."""
+    @wraps(func)
     def inner(*args, **kwargs):
         try:
             return func(*args, **kwargs)
