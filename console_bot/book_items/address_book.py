@@ -71,12 +71,9 @@ class AddressBook(UserDict):
         except KeyError:
             return None
 
-    def search(self, by_field: str, value: str) -> Optional[str]:
+    def search(self, by_field: str, value: str) -> List[Record]:
         """Search for a record in the address book."""
-        for record in self.data.values():
-            if getattr(record, by_field).value == value:
-                return record
-        return None
+        return [record for record in self.data.values() if value.lower() in getattr(record, by_field).value.lower()]
 
     def _get_users_birthday_in_current_year(self, data: Dict[str, Any]) -> List[Dict[str, Union[str, datetime]]]:
         """Return the list of users with their birthday in the current year."""
