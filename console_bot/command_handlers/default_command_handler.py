@@ -1,7 +1,7 @@
 from typing import Optional, Tuple, Union
 
 from base_handler import BaseCommandHandler
-from console_bot.book_items import Record
+from console_bot.book_items import Record, Note
 from print_utils import _pprint_notes, _pprint_records, _print_birthdays, _print_help
 
 
@@ -71,9 +71,54 @@ class DefaultCommandHandler(BaseCommandHandler):
         if args[0] == "contact":
             return self._add_contact()
         elif args[0] == "note":
-            return self._add_note(*args[1:])
+            return self._add_note()
         else:
             return "Invalid command, please try again."
+        
+    @input_error_handler
+    def _add_contact(self) -> str:
+        """Add a new contact to the address book."""
+        name = self.bot.prmt_session.prompt("Enter name: ")
+        if record := self.bot.address_book.find(name):
+            change: str = self.bot.prmt_session.prompt(f"Contact {name.capitalize()} already exists. Do you want to change it? ", default="no")
+            if change.lower() in ["yes", "y"]:
+                return self._change_contact(record.name.value)
+            else:
+                self._hello_bot()
+        else:
+            record = Record(name)
+            phone = self.bot.prmt_session.prompt("Enter phone: ")
+            record.add_phone(phone)
+            email = self.bot.prmt_session.prompt("Enter email: ")
+            if email:
+                record.add_email(email)
+            address = self.bot.prmt_session.prompt("Enter address: ")
+            if address:
+                record.add_address(address)    
+            birthday = self.bot.prmt_session.prompt("Enter birthday: ")
+            if birthday:
+                record.add_birthday(birthday)
+            self.bot.address_book.add_record(record)
+            return f"Contact {name.capitalize()} has been added."
+
+    @input_error_handler
+    def _add_note(self) -> str:
+        """Add a new note to the notebook."""
+        summary = self.bot.prmt_session.prompt("Enter the note summary: ")
+        text = self.bot.prmt_session.prompt("Enter the note text: ")
+        tags = self.bot.prmt_session.prompt("Enter tags separated by commas: ")
+        if tags:
+            tags = tags.split(",")
+        else:
+            tags = None
+        self.bot.note_book.add_note(summary=summary, text=text, tags=tags)
+        return "Note has been added."
+
+    def _add_tags_to_note(self, *args) -> str:
+        """Add tags to a note by index."""
+        note_index, *tags = args
+        note_index = int(note_index) - 1  # Note count starts from 1
+        return self.bot.note_book.add_tags_to_note(note_index, *tags)
         
     def _delete(self, *args) -> str:
         """Delete an item from the address book or notebook."""
@@ -104,68 +149,20 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _update(self, *args) -> str:
         """Update an item in the address book or notebook."""
-        if args[0] == "contact":
-            if len(args) > 1:
-                return self._change_contact(args[1])
-            else:
-                return self._change_contact()
-        elif args[0] == "note":
-            return self._change_note(args[1])
+        command = args[0]
+        if command == "contact":
+            return self._change_contact(*args[1:])
+        elif command == "note":
+            return self._change_note(*args[1:])
         else:
             return "Invalid command, please try again."
-
-    @input_error_handler
-    def _add_contact(self) -> str:
-        """Add a new contact to the address book."""
-        name = self.bot.prmt_session.prompt("Enter name: ")
-        if record := self.bot.address_book.find(name):
-            change: str = self.bot.prmt_session.prompt(f"Contact {name.capitalize()} already exists. Do you want to change it? ", default="no")
-            if change.lower() in ["yes", "y"]:
-                return self._change_contact(record.name.value)
-            else:
-                self._hello_bot()
-        else:
-            record = Record(name)
-            phone = self.bot.prmt_session.prompt("Enter phone: ")
-            record.add_phone(phone)
-            email = self.bot.prmt_session.prompt("Enter email: ")
-            if email:
-                record.add_email(email)
-            address = self.bot.prmt_session.prompt("Enter address: ")
-            if address:
-                record.add_address(address)    
-            birthday = self.bot.prmt_session.prompt("Enter birthday: ")
-            if birthday:
-                record.add_birthday(birthday)
-            self.bot.address_book.add_record(record)
-            return f"Contact {name.capitalize()} has been added."
-
-    @input_error_handler
-    def _add_note(self, *args) -> str:
-        """Add a new note to the notebook."""
-        summary = self.bot.prmt_session.prompt("Enter the note summary: ")
-        text = self.bot.prmt_session.prompt("Enter the note text: ")
-        tags = self.bot.prmt_session.prompt("Enter tags separated by commas: ")
-        if tags:
-            tags = tags.split(",")
-        else:
-            tags = None
-        self.bot.note_book.add_note(summary=summary, text=text, tags=tags)
-        return "Note has been added."
-
-    def _add_tags_to_note(self, *args) -> str:
-        """Add tags to a note by index."""
-        note_index, *tags = args
-        note_index = int(note_index) - 1  # Note count starts from 1
-        return self.bot.note_book.add_tags_to_note(note_index, *tags)
 
     @input_error_handler
     def _change_contact(self, name: Optional[str] = None) -> str:
         """Update contact data."""
         if not name:
             name = self.bot.prmt_session.prompt("Enter the name of the contact you want to edit:")
-        result: Optional[Record] = self._check_contact_exist(name)
-        if result:
+        if result := self._check_contact_exist(name):
             update_func = {"phone": result.update_phone,
                            "email": result.update_email,
                            "address": result.update_address, 
@@ -185,8 +182,32 @@ class DefaultCommandHandler(BaseCommandHandler):
         return result
 
     @input_error_handler
-    def _change_note(self, *args) -> str:
-        ...
+    def _change_note(self, index:int = None) -> str:
+        """Change the text of a note."""
+        if not index:
+            index = self.bot.prmt_session.prompt("Enter the index of the note you want to edit: ")
+        if result := self._check_note_exist(index):
+            update_func = {"summary": result.add_summary,
+                           "text": result.add_text,
+                           "tags": result.add_tags
+                           }
+            while True:
+                field = self.bot.prmt_session.prompt("Specify field you want to update: ")
+                if field in ["summary", "text"]:
+                    value = self.bot.prmt_session.prompt(f"Enter new {field}: ")
+                elif field == "tags":
+                    value = self.bot.prmt_session.prompt("Enter new tags separated by commas: ")
+                    if value:
+                        value = value.split(",")
+                else:
+                    raise ValueError("Invalid field.")
+                update_func[field](value)
+                print (f"Field {field} for note {index} was updated.")
+                resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
+                if resp.lower() in ["no", "n"]:
+                        break
+            return f"Note {index} was updated."
+        return result
 
     @input_error_handler
     def _check_contact_exist(self, name: str) -> Optional[Record]:
@@ -196,6 +217,16 @@ class DefaultCommandHandler(BaseCommandHandler):
             print(f"Contact {name.capitalize()} does not exist.")
         else:
             return record
+        
+    @input_error_handler
+    def _check_note_exist(self, index: int) -> Optional[Note]:
+        """Check if the note exists in the notebook."""
+        index = int(index)
+        try:
+            note = self.bot.note_book.get_all_notes()[index - 1]
+            return note
+        except IndexError:
+            return f"Note with index {index} does not exist."
 
     @input_error_handler
     def _delete_contact(self) -> str:

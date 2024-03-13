@@ -21,6 +21,18 @@ class Note:
         """Add a tag to the note."""
         self.tags.append(Tag(tag))
 
+    def add_tags(self, *tags) -> None:
+        """Add tags to the note."""
+        self.tags.extend([Tag(tag) for tag in tags])
+
+    def add_text(self, text: str) -> None:
+        """Add text to the note."""
+        self.text = Text(text)
+
+    def add_summary(self, summary: str) -> None:
+        """Add a summary to the note."""
+        self.summary = Text(summary)
+
     def remove_tag(self, tag: str) -> None:
         """Remove a tag from the note."""
         self.tags.remove(Tag(tag))
