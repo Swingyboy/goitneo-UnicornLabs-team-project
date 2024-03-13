@@ -1,7 +1,7 @@
 from calendar import day_name
 from collections import UserDict, defaultdict
 from datetime import datetime
-from typing import Optional, List, Dict, Union
+from typing import Any, Optional, List, Dict, Union
 
 from fields.record import Record
 
@@ -16,7 +16,7 @@ class AddressBook(UserDict):
         """Add a record to the address book."""
         self.data[record.name.value] = record
 
-    def delete(self, name: str) -> bool:
+    def delete_record(self, name: str) -> bool:
         """Delete a record from the address book."""
         record = self.find(name)
         if record:
@@ -28,7 +28,7 @@ class AddressBook(UserDict):
         """Return all records in the address book."""
         return list(self.data.values())
 
-    def to_dict(self) -> List[Dict[str, ...]]:
+    def to_dict(self) -> List[Dict[str, str]]:
         """Convert the address book to a dictionary."""
         res = []
         for record in self.data.values():
@@ -36,7 +36,7 @@ class AddressBook(UserDict):
         return res
 
     @classmethod
-    def from_dict(cls, data: List[Dict[str, ...]]) -> "AddressBook":
+    def from_dict(cls, data: List[Dict[str, str]]) -> "AddressBook":
         """Create an address book from a dictionary."""
         address_book = cls()
         for record in data:
@@ -71,14 +71,11 @@ class AddressBook(UserDict):
         except KeyError:
             return None
 
-    def search(self, by_field: str, value: str) -> Optional[str]:
+    def search(self, by_field: str, value: str) -> List[Record]:
         """Search for a record in the address book."""
-        for record in self.data.values():
-            if getattr(record, by_field).value == value:
-                return record
-        return None
+        return [record for record in self.data.values() if value.lower() in getattr(record, by_field).value.lower()]
 
-    def _get_users_birthday_in_current_year(self, data: Dict[str, ...]) -> List[Dict[str, Union[str, datetime]]]:
+    def _get_users_birthday_in_current_year(self, data: Dict[str, Any]) -> List[Dict[str, Union[str, datetime]]]:
         """Return the list of users with their birthday in the current year."""
         updated_users_list = []
         for user in data:

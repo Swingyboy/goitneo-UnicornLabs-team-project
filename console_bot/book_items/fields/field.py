@@ -57,11 +57,11 @@ class Name(Field):
 class Phone(Field):
     """A class to represent a phone number."""
     def __init__(self, value: str) -> None:
+        if len(value) < 10:
+            raise ValueError("Phone number must be at least 10 digits.")
         for char in value:
             if char.isalpha():
                 raise ValueError("Phone number must contain only digits.")
-        if len(value) < 10:
-            raise ValueError("Phone number must be at least 10 digits.")
         super().__init__(value)
 
 

@@ -70,6 +70,11 @@ class NoteBook(UserList):
         sorter = NoteSorter(strategy)
         self.data = sorter.sort(self.data, order)
 
+    def add_note(self, **kwargs) -> None:
+        """Add a note."""
+        note = Note.from_dict(summary=kwargs.get("summary"), text=kwargs.get("text"), tags=kwargs.get("tags"))
+        self.data.append(note)
+
     def add_tags_to_note(self, index, *tags) -> str:
         """Add tags to a note."""
         try:
@@ -84,11 +89,11 @@ class NoteBook(UserList):
             idx = len(self.data) - 1
         self.data[idx].text.value = new_text
 
-    def delete_note(self, idx: int = None) -> None:
+    def delete_note(self, idx: int = None) -> bool:
         """Delete a note."""
-        if not idx:
-            idx = len(self.data) - 1
-        self.data.pop(idx)
+        if note := self.data.pop(idx - 1):
+            return True
+        return False
 
     def delete_tags_from_note(self, index, *tags) -> str:
         """Delete tags from a note."""
@@ -103,6 +108,14 @@ class NoteBook(UserList):
         """Delete notes by tag."""
         self.data = [note for note in self.data if tag not in note.tags]
 
+    def get_all_notes(self, sorted_by: str = None, order: str = "asc") -> List[Note]:
+        """Return all notes."""
+        if not self.data:
+            return []
+        if sorted_by:
+            self._sort(sorted_by, order)
+        return self.data
+
     def new_note(self, *data) -> None:
         """Add a new note."""
         self.data.append(Note.from_tuple(*data))
@@ -115,6 +128,20 @@ class NoteBook(UserList):
             return self.search_by_tag(query)
         elif by == "text":
             return self.search_note(query)
+        elif by == "index":
+            return self.search_by_index(int(query))
+        elif by == "summary":
+            return self.search_by_summary(query)
+        else:
+            raise ValueError(f"Invalid search attribute: {by}")
+        
+    def search_by_index(self, index: int) -> list:
+        """Search for a note by index."""
+        return [note for note in self.data if note.index == index]
+    
+    def search_by_summary(self, summary: str) -> list:
+        """Search for a note by summary."""
+        return [note for note in self.data if summary in note.summary.value]
 
     def search_note(self, query: str) -> list:
         """Search for a note by text."""
@@ -122,7 +149,12 @@ class NoteBook(UserList):
 
     def search_by_tag(self, tag: str) -> list:
         """Search for a note by tag."""
-        return [note for note in self.data if tag in [t.value for t in note.tags]]
+        res = []
+        for note in self.data:
+            note_tags = [t.value for t in note.tags]
+            if tag in note_tags:
+                res.append(note)
+        return res
 
     def to_dict(self) -> List[dict]:
         """Convert the notebook to a dictionary."""
@@ -133,6 +165,6 @@ class NoteBook(UserList):
         """Create a notebook from a dictionary."""
         note_book = cls()
         for note in data:
-            new_note = Note.from_dict(note)
+            new_note = Note.from_dict(**note)
             note_book.data.append(new_note)
         return note_book
