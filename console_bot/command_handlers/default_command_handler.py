@@ -296,7 +296,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         if apply_sort.lower() in ["yes", "y"]:
             sort_by = self.bot.prmt_session.prompt("Enter sort attribute (index/text/tag): ")
             order = self.bot.prmt_session.prompt("Enter order (asc/desc): ", default="asc")
-            notes = self.bot.note_book.sort(sort_by, order)
+            notes = self.bot.note_book.get_all_notes(sort_by, order)
         else:
             notes = self.bot.note_book.get_all_notes()
         if not notes:

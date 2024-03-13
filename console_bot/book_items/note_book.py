@@ -112,6 +112,8 @@ class NoteBook(UserList):
         """Return all notes."""
         if not self.data:
             return []
+        if sorted_by:
+            self._sort(sorted_by, order)
         return self.data
 
     def new_note(self, *data) -> None:
