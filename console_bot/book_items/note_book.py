@@ -70,6 +70,11 @@ class NoteBook(UserList):
         sorter = NoteSorter(strategy)
         self.data = sorter.sort(self.data, order)
 
+    def add_note(self, **kwargs) -> None:
+        """Add a note."""
+        note = Note.from_dict(summary=kwargs.get("summary"), text=kwargs.get("text"), tags=kwargs.get("tags"))
+        self.data.append(note)
+
     def add_tags_to_note(self, index, *tags) -> str:
         """Add tags to a note."""
         try:
@@ -103,6 +108,12 @@ class NoteBook(UserList):
         """Delete notes by tag."""
         self.data = [note for note in self.data if tag not in note.tags]
 
+    def get_all_notes(self) -> List[Note]:
+        """Return all notes."""
+        if not self.data:
+            return []
+        return self.data
+
     def new_note(self, *data) -> None:
         """Add a new note."""
         self.data.append(Note.from_tuple(*data))
@@ -133,6 +144,6 @@ class NoteBook(UserList):
         """Create a notebook from a dictionary."""
         note_book = cls()
         for note in data:
-            new_note = Note.from_dict(note)
+            new_note = Note.from_dict(**note)
             note_book.data.append(new_note)
         return note_book
