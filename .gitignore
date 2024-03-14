@@ -2,8 +2,11 @@
 *.pyc
 /.idea/*
 ./venv/*
+./venv/bin/*
+./venv/lib/*
 venv/bin/python
 venv/lib64
 venv/pyvenv.cfg
 venv/bin/python3
 venv/bin/python3.11
+/venv/
