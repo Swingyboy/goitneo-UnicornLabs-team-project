@@ -1,4 +1,5 @@
 import re
+from field_exceptions import FieldException
 
 
 class Field:
@@ -22,7 +23,7 @@ class Birthday(Field):
         if self._is_valid_date(value):
             super().__init__(value)
         else:
-            raise ValueError("Date must be in format dd.mm.yyyy")
+            raise FieldException("Date must be in format dd.mm.yyyy")
 
     def _is_valid_date(self, value) -> bool:
         """Check if the date is in the correct format."""
@@ -38,7 +39,7 @@ class Email(Field):
         if self._is_valid_email(value):
             super().__init__(value)
         else:
-            raise ValueError("Invalid email format")
+            raise FieldException("Invalid email format")
 
     def _is_valid_email(self, value) -> bool:
         """Check if the email is in the correct format."""
@@ -58,10 +59,10 @@ class Phone(Field):
     """A class to represent a phone number."""
     def __init__(self, value: str) -> None:
         if len(value) < 10:
-            raise ValueError("Phone number must be at least 10 digits.")
+            raise FieldException("Phone number must be at least 10 digits.")
         for char in value:
             if char.isalpha():
-                raise ValueError("Phone number must contain only digits.")
+                raise FieldException("Phone number must contain only digits.")
         super().__init__(value)
 
 
@@ -78,9 +79,9 @@ class Text(Field):
     """A class to represent a text."""
     def __init__(self, value: str) -> None:
         if not self._has_valid_length(value):
-            raise ValueError("Text must be between 1 and 512 characters long.")
+            raise FieldException("Text must be between 0 and 512 characters long.")
         super().__init__(value)
 
     def _has_valid_length(self, value: str) -> bool:
         """Check if the text has a valid length."""
-        return 0 < len(value) < 512
+        return 0 <= len(value) < 512

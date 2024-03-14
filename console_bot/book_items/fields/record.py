@@ -1,5 +1,6 @@
 from typing import Optional
 from field import Address, Birthday, Email, Name, Phone
+from field_exceptions import RecordException
 
 
 class Record:
@@ -44,13 +45,17 @@ class Record:
 
     def to_dict(self):
         """Convert the record to a dictionary."""
-        return {
-            "name": self.name.value,
-            "phone": self.phone.value if self.phone else None,
-            "birthday": self.birthday.value if self.birthday else None,
-            "email": self.email.value if self.email else None,
-            "address": self.address.value if self.address else None
-        }
+        try:
+            return {
+                "name": self.name.value,
+                "phone": self.phone.value if self.phone else None,
+                "birthday": self.birthday.value if self.birthday else None,
+                "email": self.email.value if self.email else None,
+                "address": self.address.value if self.address else None
+            }
+        except AttributeError as ex:
+            raise RecordException(f"Invalid record: {ex}")
+
     
     def update_address(self, new_address: str) -> None:
         """Update the address of the record."""
@@ -101,19 +106,22 @@ class Record:
         record = cls(name)
         record.update_fields_from_tuple(*fields)
         if not record.phone:
-            raise ValueError("Phone number is required.")
+            raise RecordException("Phone number is required.")
         return record
 
     @classmethod
     def from_dict(cls, data: dict) -> "Record":
         """Create a record from a dictionary."""
-        record = cls(data.get("name"))
+        if name := data.get("name"):
+            record = cls(name)
+        else:
+            raise RecordException("Name is required.")
         if birthday := data.get("birthday"):
             record.add_birthday(birthday)
         if phone := data.get("phone"):
             record.add_phone(phone)
         else:
-            raise ValueError("Phone number is required.")
+            raise RecordException("Phone number is required.")
         if email := data.get("email"):
             record.add_email(email)
         if address := data.get("address"):
