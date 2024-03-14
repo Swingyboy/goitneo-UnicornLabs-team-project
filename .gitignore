@@ -1,3 +1,9 @@
 *.xml
 *.pyc
 /.idea/*
+./venv/*
+venv/bin/python
+venv/lib64
+venv/pyvenv.cfg
+venv/bin/python3
+venv/bin/python3.11
