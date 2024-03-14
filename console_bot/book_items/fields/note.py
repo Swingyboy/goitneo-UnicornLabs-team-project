@@ -40,6 +40,24 @@ class Note:
     def to_dict(self) -> dict:
         """Convert the note to a dictionary."""
         return {"summary": self.summary.value,"text": self.text.value, "tags": [tag.value for tag in self.tags]}
+    
+    def update_summary(self, summary: str) -> None:
+        """Update the summary of the note."""
+        self.add_summary(summary)
+
+    def update_text(self, text: str) -> None:
+        """Update the text of the note."""
+        if text:
+            self.add_text(text)
+        else:
+            self.text = None
+
+    def update_tags(self, tags) -> None:
+        """Update the tags of the note."""
+        if tags:
+            self.tags = [Tag(tag) for tag in tags]
+        else:
+            self.tags = []
 
     @classmethod
     def from_dict(cls, **kwargs) -> "Note":

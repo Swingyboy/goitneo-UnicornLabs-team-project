@@ -59,6 +59,8 @@ class DefaultCommandHandler(BaseCommandHandler):
             return self._add_contact(*args[1:])
         elif command == "note":
             return self._add_note(*args[1:])
+        elif command == "tags":
+            return self._add_tags_to_note(*args[1:])
         else:
             return "Invalid command, please try again."
         
@@ -104,11 +106,18 @@ class DefaultCommandHandler(BaseCommandHandler):
         self.bot.note_book.add_note(summary=summary, text=text, tags=tags)
         return "Note has been added."
 
-    def _add_tags_to_note(self, *args) -> str:
+    def _add_tags_to_note(self, *tags) -> str:
         """Add tags to a note by index."""
-        note_index, *tags = args
-        note_index = int(note_index) - 1  # Note count starts from 1
-        return self.bot.note_book.add_tags_to_note(note_index, *tags)
+        note_index = self.bot.prmt_session.prompt("Enter the index of the note: ")
+        if not tags:
+            tags = self.bot.prmt_session.prompt("Enter tags separated by commas: ")
+            if tags:
+                tags = tags.split(",")
+                tags = [tag.strip() for tag in tags]
+        if note := self._check_note_exist(note_index):
+            note_index = int(note_index) - 1  # Note count starts from 1
+            return self.bot.note_book.add_tags_to_note(note_index, tags)
+        return note
     
     @input_error_handler
     def _change_contact(self, name: Optional[str] = None) -> str:
@@ -140,9 +149,9 @@ class DefaultCommandHandler(BaseCommandHandler):
         if not index:
             index = self.bot.prmt_session.prompt("Enter the index of the note you want to edit: ")
         if result := self._check_note_exist(index):
-            update_func = {"summary": result.add_summary,
-                           "text": result.add_text,
-                           "tags": result.add_tags
+            update_func = {"summary": result.update_summary,
+                           "text": result.update_text,
+                           "tags": result.update_tags
                            }
             while True:
                 field = self.bot.prmt_session.prompt("Specify field you want to update: ")
@@ -161,7 +170,7 @@ class DefaultCommandHandler(BaseCommandHandler):
                 if resp.lower() in ["no", "n"]:
                         break
             return f"Note {index} was updated."
-        return result
+        return f"Note with index {index} does not exist."
 
     @input_error_handler
     def _check_contact_exist(self, name: str) -> Optional[Record]:
@@ -180,7 +189,7 @@ class DefaultCommandHandler(BaseCommandHandler):
             note = self.bot.note_book.get_all_notes()[index - 1]
             return note
         except IndexError:
-            return f"Note with index {index} does not exist."
+            return None
         
     def _delete(self, *args) -> str:
         """Delete an item from the address book or notebook."""
