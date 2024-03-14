@@ -54,15 +54,24 @@ class Record:
     
     def update_address(self, new_address: str) -> None:
         """Update the address of the record."""
-        self.add_address(new_address)
+        if new_address:
+            self.add_address(new_address)
+        else:
+            self.address = None
 
     def update_birthday(self, new_birthday: str) -> None:
         """Update the birthday of the record."""
-        self.add_birthday(new_birthday)
+        if new_birthday:
+            self.add_birthday(new_birthday)
+        else:
+            self.birthday = None
 
     def update_email(self, new_email: str) -> None:
         """Update the email of the record."""
-        self.add_email(new_email)
+        if new_email:
+            self.add_email(new_email)
+        else:
+            self.email = None
 
     def update_name(self, new_name: str) -> None:
         """Update the name of the record."""
