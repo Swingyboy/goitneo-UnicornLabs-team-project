@@ -36,6 +36,22 @@ class Record:
         """Add a phone to the record."""
         self.phone = Phone(phone)
 
+    def find_phone(self, phone: str) -> Optional[Phone]:
+        """Find a phone number in the record."""
+        if self.phone and self.phone.value == phone:
+            return self.phone
+        return None
+
+    def to_dict(self):
+        """Convert the record to a dictionary."""
+        return {
+            "name": self.name.value,
+            "phone": self.phone.value if self.phone else None,
+            "birthday": self.birthday.value if self.birthday else None,
+            "email": self.email.value if self.email else None,
+            "address": self.address.value if self.address else None
+        }
+    
     def update_address(self, new_address: str) -> None:
         """Update the address of the record."""
         self.add_address(new_address)
@@ -55,22 +71,6 @@ class Record:
     def update_phone(self, new_phone: str) -> None:
         """Update the phone of the record."""
         self.add_phone(new_phone)
-
-    def find_phone(self, phone: str) -> Optional[Phone]:
-        """Find a phone number in the record."""
-        if self.phone and self.phone.value == phone:
-            return self.phone
-        return None
-
-    def to_dict(self):
-        """Convert the record to a dictionary."""
-        return {
-            "name": self.name.value,
-            "phone": self.phone.value if self.phone else None,
-            "birthday": self.birthday.value if self.birthday else None,
-            "email": self.email.value if self.email else None,
-            "address": self.address.value if self.address else None
-        }
 
     def update_fields_from_tuple(self, *fields):
         """Update the fields of the record from a tuple."""
