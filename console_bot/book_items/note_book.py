@@ -83,13 +83,13 @@ class NoteBook(UserList):
         note = Note.from_dict(summary=kwargs.get("summary"), text=kwargs.get("text"), tags=kwargs.get("tags"))
         self.data.append(note)
 
-    def add_tags_to_note(self, index: int, tags: List[str]) -> None:
+    def add_tags_to_note(self, index: int, tags: List[str]) -> bool:
         """Add tags to a note."""
         try:
             self.data[index].tags.extend([Tag(tag) for tag in tags])
-            print(f"Tags added: {', '.join(tags)} to note with index: {index + 1}")
+            return True
         except IndexError:
-            print(f"Invalid note index: {index + 1}")
+            return False
 
     def change_text(self, new_text: str, idx: int = None) -> None:
         """Change the text of a note."""
@@ -106,14 +106,14 @@ class NoteBook(UserList):
         except IndexError:
             return False
 
-    def delete_tags_from_note(self, index, *tags) -> None:
+    def delete_tags_from_note(self, index, *tags) -> bool:
         """Delete tags from a note."""
         try:
             for tag in tags:
                 self.data[index].tags.remove(Tag(tag))
-            print(f"Tags removed: {', '.join(tags)} from note with index: {index}")
+            return True
         except IndexError:
-            print(f"Invalid note index: {index}")
+            return False
 
     def delete_by_tag(self, tag: str) -> None:
         """Delete notes by tag."""
