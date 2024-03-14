@@ -75,13 +75,13 @@ class NoteBook(UserList):
         note = Note.from_dict(summary=kwargs.get("summary"), text=kwargs.get("text"), tags=kwargs.get("tags"))
         self.data.append(note)
 
-    def add_tags_to_note(self, index, *tags) -> str:
+    def add_tags_to_note(self, index: int, tags: List[str]) -> str:
         """Add tags to a note."""
         try:
             self.data[index].tags.extend([Tag(tag) for tag in tags])
-            return f"Tags added: {', '.join(tags)} to note with index: {index}"
+            return f"Tags added: {', '.join(tags)} to note with index: {index + 1}"
         except IndexError:
-            return f"Invalid note index: {index}"
+            return f"Invalid note index: {index + 1}"
 
     def change_text(self, new_text: str, idx: int = None) -> None:
         """Change the text of a note."""
