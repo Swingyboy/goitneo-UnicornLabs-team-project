@@ -8,6 +8,7 @@ from handler_exceptions import BaseHandlerException, CommandException
 from handler_decorators import apply_decorator_to_class_methods, check_command_args, error_handler
 from print_utils import _pprint_notes, _pprint_records, _print_birthdays, _print_help
 
+
 from prompt_toolkit.shortcuts import prompt
 from fields import PhoneValidator, EmailValidator, DateValidator
 
@@ -73,38 +74,62 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _add_tags_to_note(self, *tags) -> None:
         """Add tags to a note by index."""
-        note_index = self.bot.prmt_session.prompt("Enter the index of the note: ")
-        if not tags:
-            tags = self.bot.prmt_session.prompt("Enter tags separated by commas: ")
-            if tags:
-                tags = tags.split(",")
-                tags = [tag.strip() for tag in tags]
-        if note := self._check_note_exist(note_index):
-            note_index = int(note_index) - 1  # Note count starts from 1
-            if self.bot.note_book.add_tags_to_note(note_index, tags):
-                print(f"Tags {tags} have been added to note {note_index + 1}.")
-            else:
-                print(f"Adding tags to note {note_index + 1} was failed.")
-        else:
-            print(f"Note with index {note_index} does not exist.")
+        note_index, *tags = args
+        note_index = int(note_index) - 1  # Note count starts from 1
+        return self.bot.note_book.add_tags_to_note(note_index, *tags)
     
     def _change_contact(self, name: Optional[str] = None) -> None:
         """Update contact data."""
-        if not name:
-            name = self.bot.prmt_session.prompt("Enter the name of the contact you want to edit: ")
-        if result := self._check_contact_exist(name):
-            update_func = {"phone": result.update_phone,
-                           "email": result.update_email,
-                           "address": result.update_address, 
-                           "birthday": result.update_birthday, 
-                           "name": result.update_name
-                           }
-            while True:
-                field = self.bot.prmt_session.prompt("Specify field you want to update: ")
-                value = self.bot.prmt_session.prompt(f"Enter new {field}: ")
-                if field in ["phone", "email", "address", "birthday", "name"]:
-                    update_func[field](value)
-                    print (f"Field {field} for contact {name.capitalize()} was updated.")
+        # список всех контактов
+        contacts = self.bot.address_book.get_all_records()
+        if not contacts:
+            print("The book is empty.")
+            return
+        # список контактов для редактирования
+        contacts_name = [contact.name.value for contact in contacts]
+        # список с возможностью выбора
+        print("Select contact to edit:")
+        for index, name in enumerate(contacts_name):
+            print(f"{index + 1}. {name}")
+        # пока не введется корректный индекс
+        while True:
+            # индекс выбранного контакта
+            index = self.bot.prmt_session.prompt("Enter contact number: ")
+            if index.isdigit() and 1 <= int(index) <= len(contacts_name):
+                index = int(index)
+                break
+            else:
+                print("Invalid input. Please enter a valid contact number.")
+        # имя выбранного контакта
+        name = contacts_name[int(index) - 1]
+        print(f"Selected contact: {name}")
+        # запись выбранного контакта
+        selected_contact = self.bot.address_book.find(name)
+        # список полей контакта для редактирования
+        print("Select field to edit:")
+        for index, field in enumerate(selected_contact.to_dict().keys()):
+            print(f"{index + 1}. {field}")
+        update_func = {
+            "phone": selected_contact.update_phone,
+            "email": selected_contact.update_email,
+            "address": selected_contact.update_address,
+            "birthday": selected_contact.update_birthday,
+            "name": selected_contact.update_name
+        }
+        while True:
+            # поле для редактирования
+            field_index = self.bot.prmt_session.prompt("Enter field number: ")
+            if field_index.isdigit():
+                field_index = int(field_index)
+                # является ли ввод числом и корректным индексом
+                if 1 <= field_index <= len(selected_contact.to_dict().keys()):
+                    field_name = list(selected_contact.to_dict().keys())[field_index - 1]
+                    # новое значение для выбранного поля
+                    new_value = self.bot.prmt_session.prompt(f"Enter new {field_name}: ")
+                    # Обновление поля
+                    update_func[field_name](new_value)
+                    print(f"Field {field_name} for contact {name.capitalize()} was updated.")
+                    # обновить другие поля
                     resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
                     if resp.lower() in ["no", "n"]:
                         break
@@ -114,31 +139,56 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _change_note(self, index:int = None) -> None:
         """Change the text of a note."""
-        if not index:
-            index = self.bot.prmt_session.prompt("Enter the index of the note you want to edit: ")
-        if result := self._check_note_exist(index):
-            update_func = {"summary": result.update_summary,
-                           "text": result.update_text,
-                           "tags": result.update_tags
-                           }
-            while True:
-                field = self.bot.prmt_session.prompt("Specify field you want to update: ")
-                if field in ["summary", "text"]:
-                    value = self.bot.prmt_session.prompt(f"Enter new {field}: ")
-                elif field == "tags":
-                    value = self.bot.prmt_session.prompt("Enter new tags separated by commas: ")
-                    if value:
-                        value = value.split(",")
-                        value = [tag.strip() for tag in value]
-                else:
-                    raise BaseHandlerException(f"Invalid field {value}.")
-                update_func[field](value)
-                print (f"Field {field} for note {index} was updated.")
-                resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
-                if resp.lower() in ["no", "n"]:
+        # список всех notes из noteBook
+        notes = self.bot.note_book.get_all_notes()
+        if not notes:
+            return "The book is empty."     
+        # список для редактирования
+        name_notes = [note.summary.value for note in notes]
+        # возможность выбора
+        print("Select notes to edit:")
+        for index, name in enumerate(name_notes):
+            print(f"{index + 1}. {name}")
+        while True:
+            index = self.bot.prmt_session.prompt("Enter notes number: ")
+            # является ли ввод числом и корректным индексом
+            if index.isdigit() and 1 <= int(index) <= len(name_notes):
+                index = int(index)
+                break
+            else:
+                print("Invalid input. Please enter a valid note number.")
+        name = name_notes[int(index) - 1]
+        print(f"Selected contact: {name}")
+        selected_notes = self.bot.note_book.find(name)
+        # список полей для редактирования
+        print("Select field to edit:")
+        for index, field in enumerate(selected_notes.to_dict().keys()):
+            print(f"{index + 1}. {field}")
+        # функции для обновления каждого поля
+        update_func = {"summary": selected_notes.add_summary,
+                        "text": selected_notes.add_text,
+                        "tags": selected_notes.add_tags
+        }
+        while True:
+            # выбранное поле для редактирования
+            field_index = self.bot.prmt_session.prompt("Enter field number: ")
+            if field_index.isdigit():
+                field_index = int(field_index)
+                if 1 <= field_index <= len(selected_notes.to_dict().keys()):
+                    field_name = list(selected_notes.to_dict().keys())[field_index - 1]
+                    # новое значение для выбранного поля
+                    new_value = self.bot.prmt_session.prompt(f"Enter new {field_name}: ")
+                    # поле записи
+                    update_func[field_name](new_value)
+                    print(f"Field {field_name} for note '{name}' was updated.")
+                    # желание обновить другие поля
+                    resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
+                    if resp.lower() in ["no", "n"]:
                         break
-            print(f"Note {index} was updated.")
-        print(f"Note with index {index} does not exist.")
+            else:
+                print("Invalid input. Please enter a valid field number.")
+
+        print(f"Note '{name}' was updated.")
 
     def _check_contact_exist(self, name: str) -> Optional[Record]:
         """Check if the contact exists in the address book."""
@@ -278,7 +328,7 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _get_help(self) -> None:
         """Show supported commands."""
         _print_help(self)
-
+        
     @check_command_args  
     def _update(self, command, *args) -> None:
         """Update an item in the address book or notebook."""
