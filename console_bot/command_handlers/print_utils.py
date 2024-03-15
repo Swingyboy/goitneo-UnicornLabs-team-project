@@ -56,7 +56,20 @@ def _print_birthdays(records: dict):
 
 def _print_help(handler: "BaseCommandHandler"):
     """Print the help message."""
-    print("This is contact book app.")
+    print('''
+                                 _         _             _   
+                                | |       | |           | |  
+   ___  ___   _ __   ___   ___  | |  ___  | |__    ___  | |_ 
+  / __|/ _ \\ | '_ \\ / __| / _ \\ | | / _ \\ | '_ \\  / _ \\ | __|
+ | (__| (_) || | | |\\__ \\| (_) || ||  __/ | |_) || (_) || |_ 
+  \___|\\___/ |_| |_||___/ \___/ |_| \___| |_.__/  \___/  \__|
+                                      ______                 
+                                     |______|     
+                                    
+Made by UnicornLabs                                   
+''')
+
+
     print("Available commands:")
     table = PrettyTable()
     table.field_names = ["Command", "Description"]
