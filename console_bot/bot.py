@@ -7,7 +7,7 @@ from utils import _find_best_match, _parse_input
 from prompt_toolkit.styles import Style
 
 green_style = Style.from_dict({
-     '':          'green',
+     '': 'green',
 })
 
 class ConsoleBot:
