@@ -43,9 +43,14 @@ class ConsoleBot:
                     self._save_handler(self)
                     break
 
-    def event_loop_error_handler(self, func):
+    def event_loop_error_handler(self, func, recall_state=True):
         """A decorator to handle exceptions in the event loop."""
         def inner(*args, **kwargs):
+            try:
+                if recall_state:
+                    self._recall_handler(self)
+            except MemoryError as ex:
+                print(ex)
             while True:
                 try:
                     return func(*args, **kwargs)
@@ -59,12 +64,12 @@ class ConsoleBot:
                     print("\nGoodbye!")
                     self._save_handler(self)
                     sys.exit(0)
-
+                except MemoryError as ex:
+                    print(ex)
+                    sys.exit(1)
         return inner
 
     def run(self, recall_state=True):
         """Run the bot."""
-        if recall_state:
-            self._recall_handler(self)
-        event_loop = self.event_loop_error_handler(self.bot_event_loop)
+        event_loop = self.event_loop_error_handler(self.bot_event_loop, recall_state=recall_state)
         event_loop()
