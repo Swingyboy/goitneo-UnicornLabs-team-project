@@ -52,7 +52,11 @@ class AddressBook(UserDict):
         """Create an address book from a dictionary."""
         address_book = cls()
         for record in data:
-            new_record = Record.from_dict(record)
+            try:
+                new_record = Record.from_dict(record)
+            except Exception as e:
+                print("Ignored invalid record instorage: ", record, e)
+
             address_book.add_record(new_record)
         return address_book
 
