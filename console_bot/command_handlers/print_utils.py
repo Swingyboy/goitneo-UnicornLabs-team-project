@@ -9,8 +9,8 @@ def colorize(text, color_code, bold=False):
 def _pprint_notes(notes: Union[List["Note"], "Note"]):
     """Pretty print the notes"""
     table = PrettyTable()
-    table.title = colorize("My Notes", 34, bold=True)  # Blue bold heading
-    table.field_names = [colorize("Index", 32), colorize("Summary", 32), colorize("Text", 32), colorize("Tags", 32)]
+    table.title = colorize("My Notes", 36, bold=True)  # Blue bold heading
+    table.field_names = [colorize("Index", 33), colorize("Summary", 33), colorize("Text", 33), colorize("Tags", 33)]
     table.align = "l"  # Align text to the left (subheadings included)
     table.set_style(DOUBLE_BORDER)  # Change the frame style
     table.padding_width = 1  # Setting the indent between columns
@@ -28,13 +28,13 @@ def _pprint_notes(notes: Union[List["Note"], "Note"]):
 def _pprint_records(records: Union[List["Record"], "Record"]):
     """Pretty print the records"""
     table = PrettyTable()
-    table.title = colorize("My Address Book", 34, bold=True)
+    table.title = colorize("My Address Book", 36, bold=True)
     table.field_names = [
-        colorize("Name", 32), 
-        colorize("Phone", 32), 
-        colorize("Birthday", 32), 
-        colorize("Email", 32), 
-        colorize("Address", 32)
+        colorize("Name", 33), 
+        colorize("Phone", 33), 
+        colorize("Birthday", 33), 
+        colorize("Email", 33), 
+        colorize("Address", 33)
     ]
     table.align = "l"
     table.set_style(DOUBLE_BORDER)
@@ -64,10 +64,10 @@ def _pprint_records(records: Union[List["Record"], "Record"]):
 def _print_birthdays(records: dict):
     """Print the birthdays."""
     table = PrettyTable()
-    table.title = colorize("Upcoming Birthdays", 34, bold=True)
+    table.title = colorize("Upcoming Birthdays", 36, bold=True)
     table.field_names = [
-        colorize("Day", 32), 
-        colorize("Contacts", 32)
+        colorize("Day", 33), 
+        colorize("Contacts", 33)
     ]
     table.align = "l"
     table.set_style(DOUBLE_BORDER)
@@ -97,10 +97,10 @@ Made by UnicornLabs
 
     print("Available commands:")
     table = PrettyTable()
-    table.title = colorize("Help Commands", 34, bold=True)
+    table.title = colorize("Help Commands", 36, bold=True)
     table.field_names = [
-        colorize("Command", 32), 
-        colorize("Description", 32)
+        colorize("Command", 33), 
+        colorize("Description", 33)
     ]
     table.align = "l"
     table.set_style(DOUBLE_BORDER)
