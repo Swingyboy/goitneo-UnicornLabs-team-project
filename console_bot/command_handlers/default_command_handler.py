@@ -33,7 +33,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @check_command_args
     def _add(self, command, *args) -> None:
-        """Add a new contact, note or tag. Format 'add [contact/note/tags]'."""
+        """Add a new contact or note. Format 'add [contact/note]'."""
         if command == "contact":
             name = " ".join(args)
             self._add_contact(name)
@@ -256,7 +256,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         
     @check_command_args    
     def _delete(self, command, *args) -> None:
-        """Delete an item from the address book or notebook."""
+        """Delete/remove an item from the address book or notebook. Format 'remove/delete [contact/note]"""
         if command == "contact":
             name = " ".join(args)
             self._delete_contact(name)
@@ -306,7 +306,7 @@ class DefaultCommandHandler(BaseCommandHandler):
             print(f"Deleting tags from note {note_index + 1} was failed.")
     
     def _exit_bot(self) -> None:
-        """Exit the bot."""
+        """Exit the bot and save your data."""
         print("Saving the state...")
         self.bot._save_handler(self.bot)
         print("Done! Goodbye!")
@@ -390,7 +390,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         
     @check_command_args  
     def _update(self, command, *args) -> None:
-        """Update an item in the address book or notebook."""
+        """Update an item in the address book or notebook. Format 'edit [contact/note]"""
         if command == "contact":
             self._change_contact(*args)
         elif command == "note":
