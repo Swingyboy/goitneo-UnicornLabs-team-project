@@ -48,7 +48,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         if not name:
             name = self.bot.prmt_session.prompt("Enter name: ")
         if record := self.bot.address_book.find(name):
-            change: str = self.bot.prmt_session.prompt(f"Contact {name.capitalize()} already exists. Do you want to change it? ", default="no")
+            change: str = self.bot.prmt_session.prompt(f"Contact {name} already exists. Do you want to change it? ", default="no")
             if change.lower() in ["yes", "y"]:
                 try:
                     self._change_contact(record.name.value)
@@ -107,7 +107,7 @@ class DefaultCommandHandler(BaseCommandHandler):
                 return
             # список с возможностью выбора
             print("Select contact to edit:")
-            for index, name in enumerate(contacts_name):
+            for index, name in enumerate(contact_names):
                 print(f"{index + 1}. {name}")
             # пока не введется корректный индекс
             names_completer = WordCompleter(contact_names)
@@ -124,7 +124,7 @@ class DefaultCommandHandler(BaseCommandHandler):
                 else:
                     print("Invalid input. Please enter a valid contact number.")
             # имя выбранного контакта
-            name = contacts_name[int(index) - 1]
+            name = contact_names[int(index) - 1]
             print(f"Selected contact: {name}")
         # запись выбранного контакта
         selected_contact = self.bot.address_book.find(name)
