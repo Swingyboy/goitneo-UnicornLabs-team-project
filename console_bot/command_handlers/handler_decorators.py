@@ -37,6 +37,8 @@ def check_command_args(func):
         elif func.__name__ == "_update":
             if command not in ["contact", "note"]:
                 raise CommandException(f"Invalid command {command}, please try again.")
+            if len(args) > 0:
+                raise CommandException(f"the 'edit' command does not accept any additional parameters, please try again.")
         else:
             raise CommandException(f"Invalid command {command}, please try again.")
         return func(handler, command, *args, **kwargs)
