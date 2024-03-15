@@ -20,8 +20,9 @@ class ConsoleBot:
 
     def bot_event_loop(self):
         """The main event loop for the bot."""
+        self.commands["help"]()
         while True:
-            user_input = self.prmt_session.prompt("Enter a command: ").strip().lower()
+            user_input = self.prmt_session.prompt(" > Enter a command: ").strip().lower()
             command, *args = _parse_input(user_input)
             result = self.commands[command](*args)
             if result:
@@ -41,8 +42,6 @@ class ConsoleBot:
                     match = _find_best_match(f, self.commands.keys())
                     if match:
                         print(f"Invalid command '{f}', did you mean '{match}'?")
-                    else:
-                        print(f"Invalid command, use 'help' to see supported commands.")
                     print("Please try again.")
                 except KeyboardInterrupt:
                     print("\nGoodbye!")
