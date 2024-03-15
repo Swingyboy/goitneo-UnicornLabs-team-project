@@ -11,7 +11,7 @@ from collections import namedtuple
 
 from prompt_toolkit.shortcuts import prompt
 from fields import PhoneValidator, EmailValidator, DateValidator
-
+from prompt_toolkit.completion import WordCompleter
 
 @apply_decorator_to_class_methods(error_handler)
 class DefaultCommandHandler(BaseCommandHandler):
@@ -90,30 +90,41 @@ class DefaultCommandHandler(BaseCommandHandler):
         note_index = int(note_index) - 1  # Note count starts from 1
         return self.bot.note_book.add_tags_to_note(note_index, *tags)
     
-    def _change_contact(self, name: Optional[str] = None) -> None:
-        """Update contact data."""
-        # список всех контактов
+    def get_all_contact_names(self):
         contacts = self.bot.address_book.get_all_records()
         if not contacts:
+            return []
+        # список контактов для редактирования
+        return [contact.name.value for contact in contacts]
+
+
+    def _change_contact(self, name: Optional[str] = None) -> None:
+        """Update contact data."""
+        # список контактов для редактирования
+        contact_names = self.get_all_contact_names()
+        if not contact_names:
             print("The book is empty.")
             return
-        # список контактов для редактирования
-        contacts_name = [contact.name.value for contact in contacts]
         # список с возможностью выбора
         print("Select contact to edit:")
-        for index, name in enumerate(contacts_name):
+        for index, name in enumerate(contact_names):
             print(f"{index + 1}. {name}")
         # пока не введется корректный индекс
+        names_completer = WordCompleter(contact_names)
         while True:
             # индекс выбранного контакта
-            index = self.bot.prmt_session.prompt("Enter contact number: ")
-            if index.isdigit() and 1 <= int(index) <= len(contacts_name):
-                index = int(index)
+            inputed = prompt("Enter contact number: ", completer=names_completer)
+            index=0
+            if inputed.isdigit() and 1 <= int(inputed) <= len(contact_names):
+                index = int(inputed)
+                break
+            elif inputed in contact_names:
+                index=contact_names.index(inputed)+1
                 break
             else:
                 print("Invalid input. Please enter a valid contact number.")
         # имя выбранного контакта
-        name = contacts_name[int(index) - 1]
+        name = contact_names[int(index) - 1]
         print(f"Selected contact: {name}")
         # запись выбранного контакта
         selected_contact = self.bot.address_book.find(name)
@@ -229,12 +240,19 @@ class DefaultCommandHandler(BaseCommandHandler):
         
     def _delete_contact(self, name: str = None) -> None:
         """Delete a contact from the address book."""
+        contact_names = self.get_all_contact_names()
+        if not contact_names:
+            print("The book is empty.")
+            return
+        names_completer = WordCompleter(contact_names)
+
         if not name:
-            name = self.bot.prmt_session.prompt("Enter the name of the contact you want to delete: ")
+            name = prompt("Enter the name of the contact you want to delete: ", completer=names_completer)
         result: bool = self.bot.address_book.delete_record(name)
         if result:
-            print(f"Contact {name.capitalize()} has been deleted.")
-        print(f"Contact {name.capitalize()} does not exist.")
+            print(f"Contact {name} has been deleted.")
+        else:
+            print(f"Contact {name} does not exist.")
 
     def _delete_note(self, index: int = None) -> None:
         """Delete a note from the notebook."""
