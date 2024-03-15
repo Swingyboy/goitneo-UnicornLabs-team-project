@@ -23,9 +23,11 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _add(self, command, *args) -> None:
         """Add a new contact, note or tag. Format 'add [contact/note/tags]'."""
         if command == "contact":
-            self._add_contact(*args)
+            name = " ".join(args)
+            self._add_contact(name)
         elif command == "note":
-            self._add_note(*args)
+            summary = " ".join(args)
+            self._add_note(summary)
         elif command == "tags":
             self._add_tags_to_note(*args[1:])
         
@@ -251,7 +253,9 @@ class DefaultCommandHandler(BaseCommandHandler):
     
     def _exit_bot(self) -> None:
         """Exit the bot."""
-        print("Goodbye!")
+        print("Saving the state...")
+        self.bot._save_handler(self.bot)
+        print("Done! Goodbye!")
         sys.exit(0)
 
     def _find_contact(self) -> None:
@@ -339,4 +343,4 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _hello_bot(self) -> None:
         """Greet the bot."""
-        print("How can I help you?")
+        print("How can I help you? Use 'help' command to see available commands.")
