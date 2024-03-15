@@ -112,7 +112,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         names_completer = WordCompleter(contact_names)
         while True:
             # индекс выбранного контакта
-            inputed = prompt("Enter contact number: ", completer=names_completer)
+            inputed = prompt("Enter contact number or name: ", completer=names_completer)
             index=0
             if inputed.isdigit() and 1 <= int(inputed) <= len(contact_names):
                 index = int(inputed)
