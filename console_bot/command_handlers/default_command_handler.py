@@ -7,7 +7,10 @@ from console_bot.book_items import Record, Note
 from handler_exceptions import BaseHandlerException, CommandException
 from handler_decorators import apply_decorator_to_class_methods, check_command_args, error_handler
 from print_utils import _pprint_notes, _pprint_records, _print_birthdays, _print_help
-    
+
+from prompt_toolkit.shortcuts import prompt
+from fields import PhoneValidator, EmailValidator, DateValidator
+
 
 @apply_decorator_to_class_methods(error_handler)
 class DefaultCommandHandler(BaseCommandHandler):
@@ -40,15 +43,15 @@ class DefaultCommandHandler(BaseCommandHandler):
                 self._hello_bot()
         else:
             record = Record(name)
-            phone = self.bot.prmt_session.prompt("Enter phone: ")
+            phone = prompt("Enter phone: ", validator=PhoneValidator())
             record.add_phone(phone)
-            email = self.bot.prmt_session.prompt("Enter email: ")
+            email = prompt("Enter email: ", validator=EmailValidator())
             if email:
                 record.add_email(email)
             address = self.bot.prmt_session.prompt("Enter address: ")
             if address:
                 record.add_address(address)    
-            birthday = self.bot.prmt_session.prompt("Enter birthday: ")
+            birthday = prompt("Enter birthday[DD.MM.YYYY]: ", validator= DateValidator(), validate_while_typing=False)
             if birthday:
                 record.add_birthday(birthday)
             self.bot.address_book.add_record(record)
