@@ -26,7 +26,8 @@ def _pprint_records(records: Union[List["Record"], "Record"]):
         records = [records]
 
     for record in records:
-        row = [record.name.value.capitalize(), record.phone.value]
+        name = " ".join(r.strip().capitalize() for r in record.name.value.split())
+        row = [name, record.phone.value]
         if record.birthday:
             row.append(record.birthday.value)
         else:
