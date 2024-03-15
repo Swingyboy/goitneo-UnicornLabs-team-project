@@ -17,6 +17,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @check_command_args
     def _add(self, command, *args) -> None:
+        """Add a new contact, note or tag. Format 'add [contact/note/tags]'."""
         if command == "contact":
             self._add_contact(*args)
         elif command == "note":

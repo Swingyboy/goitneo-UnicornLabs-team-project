@@ -1,9 +1,14 @@
 import sys
 from prompt_toolkit import PromptSession
+from prompt_toolkit.shortcuts import prompt
 
 from bot_memory import recall_bot_state, save_bot_state
 from utils import _find_best_match, _parse_input
+from prompt_toolkit.styles import Style
 
+green_style = Style.from_dict({
+     '':          'green',
+})
 
 class ConsoleBot:
     """A class to represent a console bot."""
@@ -22,7 +27,7 @@ class ConsoleBot:
         """The main event loop for the bot."""
         self.commands["help"]()
         while True:
-            user_input = self.prmt_session.prompt(" > Enter a command: ").strip().lower()
+            user_input = prompt(" > Enter a command: ", style=green_style).strip().lower()
             command, *args = _parse_input(user_input)
             result = self.commands[command](*args)
             if result:
