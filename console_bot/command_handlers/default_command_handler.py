@@ -214,9 +214,11 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _delete(self, command, *args) -> None:
         """Delete an item from the address book or notebook."""
         if command == "contact":
-            self._delete_contact(*args)
+            name = " ".join(args)
+            self._delete_contact(name)
         elif command == "note":
-            self._delete_note(*args)
+            index = " ".join(args)
+            self._delete_note(index)
         
     def _delete_contact(self, name: str = None) -> None:
         """Delete a contact from the address book."""
@@ -225,6 +227,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         result: bool = self.bot.address_book.delete_record(name)
         if result:
             print(f"Contact {name.capitalize()} has been deleted.")
+            return
         print(f"Contact {name.capitalize()} does not exist.")
 
     def _delete_note(self, index: int = None) -> None:
@@ -234,7 +237,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         try:
             index = int(index)
         except ValueError:
-            raise BaseCommandHandler(f"Invalid index {index}. Index should be a number")
+            raise BaseCommandHandler(f"Invalid index {index}. Index should be a number, current index is {index}.")
         if self.bot.note_book.delete_note(index):
             print(f"Note {index} has been deleted.")
         print(f"Note {index} does not exist.")
