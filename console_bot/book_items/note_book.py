@@ -70,7 +70,7 @@ class NoteBook(UserList):
             strategy = IndexSortStrategy()
         elif by == "text":
             strategy = TextSortStrategy()
-        elif by == "tag":
+        elif by in ["tag", "tags"]:
             strategy = TagSortStrategy()
         else:
             raise ValueError(f"Invalid sort attribute: {by}")
@@ -140,7 +140,7 @@ class NoteBook(UserList):
         """Search for a note."""
         if sorted_by and order:
             self._sort(sorted_by, order)
-        if by == "tag":
+        if by in ["tag", "tags"]:
             return self.search_by_tag(query)
         elif by == "text":
             return self.search_note(query)
