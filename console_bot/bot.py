@@ -17,6 +17,8 @@ class ConsoleBot:
                  command_handler: "BaseCommandHandler",
                  note_book: "NoteBook"
                  ) -> None:
+        self._save_handler = save_bot_state
+        self._recall_handler = recall_bot_state
         self.address_book = address_book
         self.note_book = note_book
         self.handler = command_handler(self)
@@ -27,13 +29,13 @@ class ConsoleBot:
         """The main event loop for the bot."""
         self.commands["help"]()
         while True:
-            user_input = prompt(" > Enter a command: ", style=green_style).strip().lower()
+            user_input = prompt(" > Enter a command: ", style=green_style).strip()
             command, *args = _parse_input(user_input)
             result = self.commands[command](*args)
             if result:
                 print(result)
                 if command in ["exit", "close"]:
-                    save_bot_state(self)
+                    self._save_handler(self)
                     break
 
     def event_loop_error_handler(self, func):
@@ -50,7 +52,7 @@ class ConsoleBot:
                     print("Please try again.")
                 except KeyboardInterrupt:
                     print("\nGoodbye!")
-                    save_bot_state(self)
+                    self._save_handler(self)
                     sys.exit(0)
 
         return inner
@@ -58,6 +60,6 @@ class ConsoleBot:
     def run(self, recall_state=True):
         """Run the bot."""
         if recall_state:
-            recall_bot_state(self)
+            self._recall_handler(self)
         event_loop = self.event_loop_error_handler(self.bot_event_loop)
         event_loop()
