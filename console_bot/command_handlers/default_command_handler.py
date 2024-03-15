@@ -207,10 +207,11 @@ class DefaultCommandHandler(BaseCommandHandler):
         for index, field in enumerate(selected_note.to_dict().keys()):
             print(f"{index + 1}. {field}")
         # функции для обновления каждого поля
-        update_func = {"summary": selected_note.update_summary,
-                        "text": selected_note.update_text,
-                        "tags": selected_note.update_tags
-        }
+        update_func = {
+            "summary": selected_note.update_summary,
+            "text": selected_note.update_text,
+            "tags": selected_note.update_tags
+            }
         while True:
             # выбранное поле для редактирования
             field_index = self.bot.prmt_session.prompt("Enter field number: ")
@@ -219,7 +220,10 @@ class DefaultCommandHandler(BaseCommandHandler):
                 if 1 <= field_index <= len(selected_note.to_dict().keys()):
                     field_name = list(selected_note.to_dict().keys())[field_index - 1]
                     # новое значение для выбранного поля
-                    new_value = self.bot.prmt_session.prompt(f"Enter new {field_name}: ")
+                    old_value = selected_note.to_dict().get(field_name)
+                    if isinstance(old_value, list):
+                        old_value = ", ".join(old_value)
+                    new_value = self.bot.prmt_session.prompt(f"Enter new {field_name}: ", default=old_value)
                     # поле записи
                     update_func[field_name](new_value)
                     print(f"Field {field_name} for note '{name}' was updated.")
