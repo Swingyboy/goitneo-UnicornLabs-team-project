@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Optional, List, Dict, Union
 
 from fields.record import Record
+from book_exceptions import AddressBookException
 
 
 class AddressBook(UserDict):
@@ -14,15 +15,23 @@ class AddressBook(UserDict):
 
     def add_record(self, record: Record) -> None:
         """Add a record to the address book."""
-        self.data[record.name.value] = record
+        try:
+            self.data[record.name.value] = record
+        except AttributeError as ex:
+            raise AddressBookException(f"Invalid record: {record}")
 
     def delete_record(self, name: str) -> bool:
         """Delete a record from the address book."""
         record = self.find(name)
-        if record:
-            self.data.pop(record.name.value)
-            return True
-        return False
+        try:
+            if record:
+                self.data.pop(record.name.value)
+                return True
+            return False
+        except AttributeError as ex:
+            raise AddressBookException(f"Invalid record: {record}")
+        except IndexError as ex:
+            raise AddressBookException(f"Invalid index: {record.name.value} for record: {record}")
 
     def get_all_records(self) -> List[Record]:
         """Return all records in the address book."""
@@ -32,7 +41,10 @@ class AddressBook(UserDict):
         """Convert the address book to a dictionary."""
         res = []
         for record in self.data.values():
-            res.append(record.to_dict())
+            try:
+                res.append(record.to_dict())
+            except TypeError as ex:
+                raise AddressBookException(f"Invalid record: {record}. Unable to convert to dictionary.")
         return res
 
     @classmethod
@@ -40,7 +52,11 @@ class AddressBook(UserDict):
         """Create an address book from a dictionary."""
         address_book = cls()
         for record in data:
-            new_record = Record.from_dict(record)
+            try:
+                new_record = Record.from_dict(record)
+            except Exception as e:
+                print("Ignored invalid record instorage: ", record, e)
+
             address_book.add_record(new_record)
         return address_book
 
@@ -50,10 +66,13 @@ class AddressBook(UserDict):
         updated_users_list = self._get_users_birthday_in_current_year(self.data)
         for user in updated_users_list:
             if day := self._estimate_birthday_delta(user, num_of_days):
-                if day.lower() in ["saturday", "sunday"]:
-                    users_with_day_this_week["Monday"].append(user.get("name").capitalize())
+                if name := user.get("name"):
+                    if day.lower() in ["saturday", "sunday"]:
+                        users_with_day_this_week["Monday"].append(name.capitalize())
+                    else:
+                        users_with_day_this_week[day].append(name.capitalize())
                 else:
-                    users_with_day_this_week[day].append(user.get("name").capitalize())
+                    raise AddressBookException(f"Invalid user: {user}. Unable to estimate birthday.")
 
         sorted_days = sorted(users_with_day_this_week.keys(), key=lambda x: list(day_name).index(x))
 

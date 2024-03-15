@@ -1,5 +1,6 @@
 from typing import List
 from field import Tag, Text
+from field_exceptions import NoteException
 
 
 class Note:
@@ -19,11 +20,21 @@ class Note:
 
     def add_tag(self, tag: str) -> None:
         """Add a tag to the note."""
-        self.tags.append(Tag(tag))
+        try:
+            self.tags.append(Tag(tag))
+        except ValueError:
+            raise NoteException(f"Invalid tag: {tag}")
+        except MemoryError:
+            raise MemoryError(f"Memory is full. The tag {tag} cannot be created.")
 
     def add_tags(self, *tags) -> None:
         """Add tags to the note."""
-        self.tags.extend([Tag(tag) for tag in tags])
+        try:
+            self.tags.extend([Tag(tag) for tag in tags])
+        except ValueError:
+            raise NoteException(f"Invalid tags: {tags}")
+        except MemoryError:
+            raise MemoryError(f"Memory is full. The tags {tags} cannot be created.")
 
     def add_text(self, text: str) -> None:
         """Add text to the note."""
@@ -39,12 +50,36 @@ class Note:
 
     def to_dict(self) -> dict:
         """Convert the note to a dictionary."""
-        return {"summary": self.summary.value,"text": self.text.value, "tags": [tag.value for tag in self.tags]}
+        try:
+            return {"summary": self.summary.value,"text": self.text.value, "tags": [tag.value for tag in self.tags]}
+        except AttributeError as ex:
+            raise NoteException(f"Invalid note: {ex}")
+    
+    def update_summary(self, summary: str) -> None:
+        """Update the summary of the note."""
+        self.add_summary(summary)
+
+    def update_text(self, text: str) -> None:
+        """Update the text of the note."""
+        if text:
+            self.add_text(text)
+        else:
+            self.text = None
+
+    def update_tags(self, tags) -> None:
+        """Update the tags of the note."""
+        if tags:
+            self.tags = [Tag(tag) for tag in tags]
+        else:
+            self.tags = []
 
     @classmethod
     def from_dict(cls, **kwargs) -> "Note":
         """Create a note from a dictionary."""
-        return cls(kwargs["summary"], kwargs["text"], tags=kwargs["tags"] if "tags" in kwargs else None)
+        try:
+            return cls(kwargs["summary"], kwargs["text"], tags=kwargs["tags"] if "tags" in kwargs else None)
+        except KeyError as ex:
+            raise NoteException(f"Missing required field: {ex}")
 
     @classmethod
     def from_tuple(cls, *data) -> "Note":
@@ -69,5 +104,5 @@ class Note:
                 tags_start_index = data.index('tags') + 1
                 tags = list(data[tags_start_index:])
         else:
-            raise ValueError("Invalid input for note")
+            raise NoteException("Invalid input for note")
         return cls(text, tags=tags if tags else None)

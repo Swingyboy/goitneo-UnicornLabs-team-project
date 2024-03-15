@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from collections import UserList
 from typing import List, Optional
 from fields import Note, Tag
+from book_exceptions import NoteBookException
+from fields.field_exceptions import NoteException
 
 
 class SortStrategy(ABC):
@@ -42,12 +44,18 @@ class NoteSorter:
 
     def sort(self, data, order="asc"):
         """Sort the notes."""
-        sorted_data = self.strategy.sort(data)
-        if order == "desc" and (isinstance(self.strategy, IndexSortStrategy) or isinstance(self.strategy, TextSortStrategy)):
-            sorted_data.reverse()
-        elif order == "desc" and isinstance(self.strategy, TagSortStrategy):
-            sorted_data = sorted_data[::-1]
-        return sorted_data
+        try:
+            sorted_data = self.strategy.sort(data)
+            if order == "desc" and (isinstance(self.strategy, IndexSortStrategy) or isinstance(self.strategy, TextSortStrategy)):
+                sorted_data.reverse()
+            elif order == "desc" and isinstance(self.strategy, TagSortStrategy):
+                try:
+                    sorted_data = sorted_data[::-1]
+                except (TypeError, IndexError) as ex:
+                    raise NoteBookException(f"Invalid data to sort: {data}")
+            return sorted_data
+        except AttributeError as ex:
+            raise NoteBookException(f"Invalid sort strategy: {self.strategy}")
 
 
 class NoteBook(UserList):
@@ -75,13 +83,13 @@ class NoteBook(UserList):
         note = Note.from_dict(summary=kwargs.get("summary"), text=kwargs.get("text"), tags=kwargs.get("tags"))
         self.data.append(note)
 
-    def add_tags_to_note(self, index, *tags) -> str:
+    def add_tags_to_note(self, index: int, tags: List[str]) -> bool:
         """Add tags to a note."""
         try:
             self.data[index].tags.extend([Tag(tag) for tag in tags])
-            return f"Tags added: {', '.join(tags)} to note with index: {index}"
+            return True
         except IndexError:
-            return f"Invalid note index: {index}"
+            return False
 
     def change_text(self, new_text: str, idx: int = None) -> None:
         """Change the text of a note."""
@@ -91,18 +99,21 @@ class NoteBook(UserList):
 
     def delete_note(self, idx: int = None) -> bool:
         """Delete a note."""
-        if note := self.data.pop(idx - 1):
-            return True
-        return False
+        try:
+            if note := self.data.pop(idx - 1):
+                return True
+            return False
+        except IndexError:
+            return False
 
-    def delete_tags_from_note(self, index, *tags) -> str:
+    def delete_tags_from_note(self, index, *tags) -> bool:
         """Delete tags from a note."""
         try:
             for tag in tags:
                 self.data[index].tags.remove(Tag(tag))
-            return f"Tags removed: {', '.join(tags)} from note with index: {index}"
+            return True
         except IndexError:
-            return f"Invalid note index: {index}"
+            return False
 
     def delete_by_tag(self, tag: str) -> None:
         """Delete notes by tag."""
@@ -118,7 +129,12 @@ class NoteBook(UserList):
 
     def new_note(self, *data) -> None:
         """Add a new note."""
-        self.data.append(Note.from_tuple(*data))
+        try:
+            self.data.append(Note.from_tuple(*data))
+        except TypeError as ex:
+            raise NoteException(f"Invalid data for Note: {data}")
+        except MemoryError as ex:
+            raise MemoryError(f"Memory is full. Unable to create a new note from data: {data}")
 
     def search(self, by: str, query: str, sorted_by: str, order: str) -> List[Note]:
         """Search for a note."""
@@ -153,7 +169,12 @@ class NoteBook(UserList):
         for note in self.data:
             note_tags = [t.value for t in note.tags]
             if tag in note_tags:
-                res.append(note)
+                try:
+                    res.append(note)
+                except TypeError as ex:
+                    raise NoteException(f"Invalid note: {note}. Unable to add to search results.")
+                except MemoryError as ex:
+                    raise MemoryError(f"Memory is full. Unable to add note: {note} to search results.")
         return res
 
     def to_dict(self) -> List[dict]:
@@ -173,5 +194,10 @@ class NoteBook(UserList):
         note_book = cls()
         for note in data:
             new_note = Note.from_dict(**note)
-            note_book.data.append(new_note)
+            try:
+                note_book.data.append(new_note)
+            except TypeError as ex:
+                raise NoteBookException(f"Invalid note: {note}. Unable to add to notebook.")
+            except MemoryError as ex:
+                raise MemoryError(f"Memory is full. Unable to add note: {note} to notebook.")
         return note_book

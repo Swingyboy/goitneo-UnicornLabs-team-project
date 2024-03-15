@@ -56,6 +56,7 @@ def _print_birthdays(records: dict):
 
 def _print_help(handler: "BaseCommandHandler"):
     """Print the help message."""
+    print("This is contact book app.")
     print("Available commands:")
     table = PrettyTable()
     table.field_names = ["Command", "Description"]

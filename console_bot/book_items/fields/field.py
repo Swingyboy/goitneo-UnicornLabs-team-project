@@ -1,5 +1,6 @@
 import re
-
+from field_exceptions import FieldException
+from prompt_toolkit.validation import Validator, ValidationError
 
 class Field:
     """Base class for all fields."""
@@ -19,33 +20,15 @@ class Address(Field):
 class Birthday(Field):
     """A class to represent a birthday."""
     def __init__(self, value: str) -> None:
-        if self._is_valid_date(value):
-            super().__init__(value)
-        else:
-            raise ValueError("Date must be in format dd.mm.yyyy")
-
-    def _is_valid_date(self, value) -> bool:
-        """Check if the date is in the correct format."""
-        pattern = r'^\d{2}\.\d{2}\.\d{4}$'
-        if re.match(pattern, value):
-            return True
-        return False
+        DateValidator().validate(value)
+        super().__init__(value)
 
 
 class Email(Field):
     """A class to represent an email."""
     def __init__(self, value: str) -> None:
-        if self._is_valid_email(value):
-            super().__init__(value)
-        else:
-            raise ValueError("Invalid email format")
-
-    def _is_valid_email(self, value) -> bool:
-        """Check if the email is in the correct format."""
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        if re.match(pattern, value):
-            return True
-        return False
+        EmailValidator().validate(value)
+        super().__init__(value)
 
 
 class Name(Field):
@@ -57,11 +40,7 @@ class Name(Field):
 class Phone(Field):
     """A class to represent a phone number."""
     def __init__(self, value: str) -> None:
-        if len(value) < 10:
-            raise ValueError("Phone number must be at least 10 digits.")
-        for char in value:
-            if char.isalpha():
-                raise ValueError("Phone number must contain only digits.")
+        PhoneValidator().validate(value)
         super().__init__(value)
 
 
@@ -78,9 +57,52 @@ class Text(Field):
     """A class to represent a text."""
     def __init__(self, value: str) -> None:
         if not self._has_valid_length(value):
-            raise ValueError("Text must be between 1 and 512 characters long.")
+            raise FieldException("Text must be between 0 and 512 characters long.")
         super().__init__(value)
 
     def _has_valid_length(self, value: str) -> bool:
         """Check if the text has a valid length."""
-        return 0 < len(value) < 512
+        return 0 <= len(value) < 512
+
+class PhoneValidator(Validator):
+    def validate(self, data):
+        text = data
+        if not isinstance(data, str):
+            text = data.text
+
+        if text and not text.isdigit():
+            raise ValidationError(message='Phone can contain only digits')
+        if len(text) < 3:
+            raise ValidationError(message='Phone min len is 3')
+        
+class EmailValidator(Validator):
+    def validate(self, data):
+        text = data
+        if not isinstance(data, str):
+            text = data.text
+
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if re.match(pattern, text) is None:
+            raise ValidationError(message='Invalid email format')
+
+class DateValidator(Validator):
+    def validate(self, data):
+        text = data
+        if not isinstance(data, str):
+            text = data.text
+
+        pattern = r'^\d{2}\.\d{2}\.\d{4}$'
+        if re.match(pattern, text) is None:
+            raise ValidationError(message='Invalid date format, expected: DD.MM.YYYY')
+        
+        res=text.split(".")
+        if int(res[0]) > 31:
+            raise ValidationError(message='Day can not be greater than 31')
+        if int(res[0]) == 0:
+            raise ValidationError(message='Day can not be 0')
+        if int(res[1]) > 12:
+            raise ValidationError(message='Month can not be greater than 31')
+        if int(res[1]) == 0:
+            raise ValidationError(message='Month can not be 0')
+        if int(res[2]) == 0:
+            raise ValidationError(message='Year can not be 0')
