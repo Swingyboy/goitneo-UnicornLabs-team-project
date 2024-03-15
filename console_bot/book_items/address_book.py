@@ -5,6 +5,7 @@ from typing import Any, Optional, List, Dict, Union
 
 from fields.record import Record
 from book_exceptions import AddressBookException
+from prompt_toolkit.validation import ValidationError
 
 
 class AddressBook(UserDict):
@@ -54,7 +55,7 @@ class AddressBook(UserDict):
         for record in data:
             try:
                 new_record = Record.from_dict(record)
-            except Exception as e:
+            except ValidationError as e:
                 print("Ignored invalid record instorage: ", record, e)
 
             address_book.add_record(new_record)
