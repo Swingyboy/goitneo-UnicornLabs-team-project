@@ -8,14 +8,12 @@ class BaseCommandHandler(ABC):
         self.bot = bot
         self.SUPPORTED_COMMANDS = {"add": self._add,
                                    "edit": self._update,
-                                   "close": self._exit_bot,
-                                   "delete": self._delete,
-                                   "exit": self._exit_bot,
+                                   "close/exit": self._exit_bot,
+                                   "delete/remove": self._delete,
                                    "search": self._get,
                                    "get-all": self._get_all,
                                    "help": self._get_help,
                                    "hello": self._hello_bot,
-                                   "remove": self._delete
                                    }
 
     @abstractmethod
