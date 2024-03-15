@@ -7,7 +7,7 @@ from console_bot.book_items import Record, Note
 from handler_exceptions import BaseHandlerException, CommandException
 from handler_decorators import apply_decorator_to_class_methods, check_command_args, error_handler
 from print_utils import _pprint_notes, _pprint_records, _print_birthdays, _print_help
-
+from collections import namedtuple
 
 from prompt_toolkit.shortcuts import prompt
 from fields import PhoneValidator, EmailValidator, DateValidator
@@ -18,6 +18,18 @@ class DefaultCommandHandler(BaseCommandHandler):
     def __init__(self, bot: "ConsoleBot") -> None:
         super().__init__(bot)
         self.bot: "ConsoleBot" = bot
+
+        self.cmd_phone = "phone"
+        self.cmd_email = "email"
+        self.cmd_birthday = "birthday"
+        self.cmd_address = "address"
+        self.cmd_name = "name"
+
+        self.validators = {
+            self.cmd_phone : PhoneValidator(),
+            self.cmd_email: EmailValidator(),
+            self.cmd_birthday: DateValidator(),
+        }
 
     @check_command_args
     def _add(self, command, *args) -> None:
@@ -44,15 +56,15 @@ class DefaultCommandHandler(BaseCommandHandler):
                 self._hello_bot()
         else:
             record = Record(name)
-            phone = prompt("Enter phone: ", validator=PhoneValidator())
+            phone = prompt("Enter phone: ", validator=self.validators[self.cmd_phone])
             record.add_phone(phone)
-            email = prompt("Enter email: ", validator=EmailValidator())
+            email = prompt("Enter email: ", validator=self.validators[self.cmd_email])
             if email:
                 record.add_email(email)
             address = self.bot.prmt_session.prompt("Enter address: ")
             if address:
                 record.add_address(address)    
-            birthday = prompt("Enter birthday[DD.MM.YYYY]: ", validator= DateValidator(), validate_while_typing=False)
+            birthday = prompt("Enter birthday[DD.MM.YYYY]: ", validator=self.validators[self.cmd_birthday], validate_while_typing=False)
             if birthday:
                 record.add_birthday(birthday)
             self.bot.address_book.add_record(record)
@@ -110,11 +122,11 @@ class DefaultCommandHandler(BaseCommandHandler):
         for index, field in enumerate(selected_contact.to_dict().keys()):
             print(f"{index + 1}. {field}")
         update_func = {
-            "phone": selected_contact.update_phone,
-            "email": selected_contact.update_email,
-            "address": selected_contact.update_address,
-            "birthday": selected_contact.update_birthday,
-            "name": selected_contact.update_name
+            self.cmd_phone: selected_contact.update_phone,
+            self.cmd_email: selected_contact.update_email,
+            self.cmd_address: selected_contact.update_address,
+            self.cmd_birthday: selected_contact.update_birthday,
+            self.cmd_name: selected_contact.update_name
         }
         while True:
             # поле для редактирования
@@ -125,17 +137,16 @@ class DefaultCommandHandler(BaseCommandHandler):
                 if 1 <= field_index <= len(selected_contact.to_dict().keys()):
                     field_name = list(selected_contact.to_dict().keys())[field_index - 1]
                     # новое значение для выбранного поля
-                    new_value = self.bot.prmt_session.prompt(f"Enter new {field_name}: ")
-                    # Обновление поля
+                    old_value = selected_contact.to_dict().get(field_name)
+                    new_value = prompt(f"Enter new {field_name}: ", default=old_value, validator=self.validators.get(field_name))
                     update_func[field_name](new_value)
-                    print(f"Field {field_name} for contact {name.capitalize()} was updated.")
+                    print(f"Field '{field_name}' for contact '{name.capitalize()}' was updated from '{old_value}' to '{new_value}'")
                     # обновить другие поля
                     resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
                     if resp.lower() in ["no", "n"]:
                         break
             print(f"Contact {name.capitalize()} was updated.")
             return
-        print(f"Contact {name.capitalize()} does not exist.")
 
     def _change_note(self, index:int = None) -> None:
         """Change the text of a note."""
