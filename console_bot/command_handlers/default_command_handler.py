@@ -94,13 +94,12 @@ class DefaultCommandHandler(BaseCommandHandler):
         contacts = self.bot.address_book.get_all_records()
         if not contacts:
             return []
-        # список контактов для редактирования
+
         return [contact.name.value for contact in contacts]
 
 
     def _change_contact(self, name: Optional[str] = None) -> None:
         """Update contact data."""
-        # список контактов для редактирования
         contact_names = self.get_all_contact_names()
         if not contact_names:
             print("The book is empty.")
