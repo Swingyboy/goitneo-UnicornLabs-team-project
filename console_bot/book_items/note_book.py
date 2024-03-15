@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import UserList
-from typing import List
+from typing import List, Optional
 from fields import Note, Tag
 
 
@@ -159,6 +159,13 @@ class NoteBook(UserList):
     def to_dict(self) -> List[dict]:
         """Convert the notebook to a dictionary."""
         return [note.to_dict() for note in self.data]
+
+    def find(self, name: str) -> Optional[Note]:
+        """Find a note by name."""
+        for note in self.data:
+            if note.summary.value == name:
+                return note
+        return None
 
     @classmethod
     def from_dict(cls, data: List[dict]) -> "NoteBook":
