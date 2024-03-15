@@ -240,6 +240,7 @@ class DefaultCommandHandler(BaseCommandHandler):
             raise BaseCommandHandler(f"Invalid index {index}. Index should be a number, current index is {index}.")
         if self.bot.note_book.delete_note(index):
             print(f"Note {index} has been deleted.")
+            return
         print(f"Note {index} does not exist.")
 
     def _delete_tags_from_note(self, *args) -> None:
