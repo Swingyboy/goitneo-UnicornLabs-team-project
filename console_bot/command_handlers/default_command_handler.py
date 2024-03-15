@@ -11,7 +11,7 @@ from collections import namedtuple
 
 from prompt_toolkit.shortcuts import prompt
 from fields import PhoneValidator, EmailValidator, DateValidator
-
+from prompt_toolkit.completion import WordCompleter
 
 @apply_decorator_to_class_methods(error_handler)
 class DefaultCommandHandler(BaseCommandHandler):
@@ -35,18 +35,20 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _add(self, command, *args) -> None:
         """Add a new contact or note. Format 'add [contact/note]'."""
         if command == "contact":
-            self._add_contact(*args)
+            name = " ".join(args)
+            self._add_contact(name)
         elif command == "note":
-            self._add_note(*args)
+            summary = " ".join(args)
+            self._add_note(summary)
         elif command == "tags":
-            self._add_tags_to_note(*args[1:])
+            self._add_tags_to_note(*args)
         
     def _add_contact(self, name: str = None) -> None:
         """Add a new contact to the address book."""
         if not name:
             name = self.bot.prmt_session.prompt("Enter name: ")
         if record := self.bot.address_book.find(name):
-            change: str = self.bot.prmt_session.prompt(f"Contact {name.capitalize()} already exists. Do you want to change it? ", default="no")
+            change: str = self.bot.prmt_session.prompt(f"Contact {name} already exists. Do you want to change it? ", default="no")
             if change.lower() in ["yes", "y"]:
                 try:
                     self._change_contact(record.name.value)
@@ -86,107 +88,136 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _add_tags_to_note(self, *tags) -> None:
         """Add tags to a note by index."""
-        note_index, *tags = args
+        note_index = self.bot.prmt_session.prompt("Enter note index to witch you want to add tags: ")
         note_index = int(note_index) - 1  # Note count starts from 1
-        return self.bot.note_book.add_tags_to_note(note_index, *tags)
-    
+        tags = list(tags)
+        if self.bot.note_book.add_tags_to_note(note_index, tags):
+            print(f"Tags {tags} have been added to note {note_index + 1}.")
+            return
+        else:
+            print(f"Adding tags to note {note_index + 1} was failed.")
+            
     def _change_contact(self, name: Optional[str] = None) -> None:
         """Update contact data."""
-        # список всех контактов
-        contacts = self.bot.address_book.get_all_records()
-        if not contacts:
-            print("The book is empty.")
-            return
-        # список контактов для редактирования
-        contacts_name = [contact.name.value for contact in contacts]
-        # список с возможностью выбора
-        print("Select contact to edit:")
-        for index, name in enumerate(contacts_name):
-            print(f"{index + 1}. {name}")
-        # пока не введется корректный индекс
-        while True:
-            # индекс выбранного контакта
-            index = self.bot.prmt_session.prompt("Enter contact number: ")
-            if index.isdigit() and 1 <= int(index) <= len(contacts_name):
-                index = int(index)
-                break
-            else:
-                print("Invalid input. Please enter a valid contact number.")
-        # имя выбранного контакта
-        name = contacts_name[int(index) - 1]
-        print(f"Selected contact: {name}")
+        if not name:
+            # список всех контактов
+            contact_names = self.get_all_contact_names()
+            if not contact_names:
+                print("The book is empty.")
+                return
+            # список с возможностью выбора
+            print("Select contact to edit:")
+            for index, name in enumerate(contact_names):
+                print(f"{index + 1}. {name}")
+            # пока не введется корректный индекс
+            names_completer = WordCompleter(contact_names)
+            while True:
+                # индекс выбранного контакта
+                inputed = prompt("Enter contact number or name: ", completer=names_completer)
+                index=0
+                if inputed.isdigit() and 1 <= int(inputed) <= len(contact_names):
+                    index = int(inputed)
+                    break
+                elif inputed in contact_names:
+                    index=contact_names.index(inputed)+1
+                    break
+                else:
+                    print("Invalid input. Please enter a valid contact number.")
+            # имя выбранного контакта
+            name = contact_names[int(index) - 1]
+            print(f"Selected contact: {name}")
         # запись выбранного контакта
         selected_contact = self.bot.address_book.find(name)
-        # список полей контакта для редактирования
-        print("Select field to edit:")
-        for index, field in enumerate(selected_contact.to_dict().keys()):
-            print(f"{index + 1}. {field}")
-        update_func = {
-            self.cmd_phone: selected_contact.update_phone,
-            self.cmd_email: selected_contact.update_email,
-            self.cmd_address: selected_contact.update_address,
-            self.cmd_birthday: selected_contact.update_birthday,
-            self.cmd_name: selected_contact.update_name
-        }
-        while True:
-            # поле для редактирования
-            field_index = self.bot.prmt_session.prompt("Enter field number: ")
-            if field_index.isdigit():
-                field_index = int(field_index)
-                # является ли ввод числом и корректным индексом
-                if 1 <= field_index <= len(selected_contact.to_dict().keys()):
-                    field_name = list(selected_contact.to_dict().keys())[field_index - 1]
-                    # новое значение для выбранного поля
-                    old_value = selected_contact.to_dict().get(field_name)
-                    new_value = prompt(f"Enter new {field_name}: ", default=old_value, validator=self.validators.get(field_name))
-                    update_func[field_name](new_value)
-                    print(f"Field '{field_name}' for contact '{name.capitalize()}' was updated from '{old_value}' to '{new_value}'")
-                    # обновить другие поля
-                    resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
-                    if resp.lower() in ["no", "n"]:
-                        break
-            print(f"Contact {name.capitalize()} was updated.")
-            return
+        if selected_contact:
+            update_func = {
+                self.cmd_phone: selected_contact.update_phone,
+                self.cmd_email: selected_contact.update_email,
+                self.cmd_address: selected_contact.update_address,
+                self.cmd_birthday: selected_contact.update_birthday,
+                self.cmd_name: selected_contact.update_name
+            }
+            while True:
+                # список полей контакта для редактирования
+                print("Select field to edit:")
+                for index, field in enumerate(selected_contact.to_dict().keys()):
+                    print(f"{index + 1}. {field}")
+                # поле для редактирования
+                field_index = self.bot.prmt_session.prompt("Enter field number: ")
+                if field_index.isdigit():
+                    field_index = int(field_index)
+                    # является ли ввод числом и корректным индексом
+                    if 1 <= field_index <= len(selected_contact.to_dict().keys()):
+                        field_name = list(selected_contact.to_dict().keys())[field_index - 1]
+                        # новое значение для выбранного поля
+                        old_value = selected_contact.to_dict().get(field_name)
+                        new_value = prompt(f"Enter new {field_name}: ", default=old_value, validator=self.validators.get(field_name))
+                        update_func[field_name](new_value)
+                        print(f"Field '{field_name}' for contact '{name.capitalize()}' was updated from '{old_value}' to '{new_value}'")
+                        # обновить другие поля
+                        resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
+                        if resp.lower() in ["no", "n"]:
+                            break
+                        else:
+                            continue
+                else:
+                    print("Invalid input. Please enter a valid field number.")
+                    continue
+                print(f"Contact {name} was updated.")
+        else:
+            print(f"Contact {name} does not exist.")
+
+    def get_all_contact_names(self):
+        contacts = self.bot.address_book.get_all_records()
+        if not contacts:
+            return []
+
+        return [contact.name.value for contact in contacts]
 
     def _change_note(self, index:int = None) -> None:
         """Change the text of a note."""
-        # список всех notes из noteBook
-        notes = self.bot.note_book.get_all_notes()
-        if not notes:
-            return "The book is empty."     
-        # список для редактирования
-        name_notes = [note.summary.value for note in notes]
-        # возможность выбора
-        print("Select notes to edit:")
-        for index, name in enumerate(name_notes):
-            print(f"{index + 1}. {name}")
-        while True:
-            index = self.bot.prmt_session.prompt("Enter notes number: ")
-            # является ли ввод числом и корректным индексом
-            if index.isdigit() and 1 <= int(index) <= len(name_notes):
-                index = int(index)
-                break
-            else:
-                print("Invalid input. Please enter a valid note number.")
-        name = name_notes[int(index) - 1]
-        print(f"Selected contact: {name}")
-        selected_notes = self.bot.note_book.find(name)
+        if not index:
+            # список всех notes из noteBook
+            notes = self.bot.note_book.get_all_notes()
+            if not notes:
+                return "The book is empty."     
+            # список для редактирования
+            name_notes = [note.summary.value for note in notes]
+            # возможность выбора
+            print("Select notes to edit:")
+            for index, name in enumerate(name_notes):
+                print(f"{index + 1}. {name}")
+            while True:
+                index = self.bot.prmt_session.prompt("Enter notes number: ")
+                # является ли ввод числом и корректным индексом
+                if index.isdigit() and 1 <= int(index) <= len(name_notes):
+                    index = int(index)
+                    break
+                else:
+                    print("Invalid input. Please enter a valid note number.")
+            name = name_notes[int(index) - 1]
+            
+            selected_note = self.bot.note_book.find(name)
+        else:
+           selected_note = self._check_note_exist(index)
+           name = selected_note.summary.value
+
+        print(f"Selected note: {name}")
         # список полей для редактирования
         print("Select field to edit:")
-        for index, field in enumerate(selected_notes.to_dict().keys()):
+        for index, field in enumerate(selected_note.to_dict().keys()):
             print(f"{index + 1}. {field}")
         # функции для обновления каждого поля
-        update_func = {"summary": selected_notes.add_summary,
-                        "text": selected_notes.add_text,
-                        "tags": selected_notes.add_tags
+        update_func = {"summary": selected_note.update_summary,
+                        "text": selected_note.update_text,
+                        "tags": selected_note.update_tags
         }
         while True:
             # выбранное поле для редактирования
             field_index = self.bot.prmt_session.prompt("Enter field number: ")
             if field_index.isdigit():
                 field_index = int(field_index)
-                if 1 <= field_index <= len(selected_notes.to_dict().keys()):
-                    field_name = list(selected_notes.to_dict().keys())[field_index - 1]
+                if 1 <= field_index <= len(selected_note.to_dict().keys()):
+                    field_name = list(selected_note.to_dict().keys())[field_index - 1]
                     # новое значение для выбранного поля
                     new_value = self.bot.prmt_session.prompt(f"Enter new {field_name}: ")
                     # поле записи
@@ -223,18 +254,27 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _delete(self, command, *args) -> None:
         """Delete/remove an item from the address book or notebook. Format 'remove/delete [contact/note]"""
         if command == "contact":
-            self._delete_contact(*args)
+            name = " ".join(args)
+            self._delete_contact(name)
         elif command == "note":
-            self._delete_note(*args)
+            index = " ".join(args)
+            self._delete_note(index)
         
     def _delete_contact(self, name: str = None) -> None:
         """Delete a contact from the address book."""
+        contact_names = self.get_all_contact_names()
+        if not contact_names:
+            print("The book is empty.")
+            return
+        names_completer = WordCompleter(contact_names)
+
         if not name:
-            name = self.bot.prmt_session.prompt("Enter the name of the contact you want to delete: ")
+            name = prompt("Enter the name of the contact you want to delete: ", completer=names_completer)
         result: bool = self.bot.address_book.delete_record(name)
         if result:
-            print(f"Contact {name.capitalize()} has been deleted.")
-        print(f"Contact {name.capitalize()} does not exist.")
+            print(f"Contact {name} has been deleted.")
+        else:
+            print(f"Contact {name} does not exist.")
 
     def _delete_note(self, index: int = None) -> None:
         """Delete a note from the notebook."""
@@ -243,9 +283,10 @@ class DefaultCommandHandler(BaseCommandHandler):
         try:
             index = int(index)
         except ValueError:
-            raise BaseCommandHandler(f"Invalid index {index}. Index should be a number")
+            raise BaseCommandHandler(f"Invalid index {index}. Index should be a number, current index is {index}.")
         if self.bot.note_book.delete_note(index):
             print(f"Note {index} has been deleted.")
+            return
         print(f"Note {index} does not exist.")
 
     def _delete_tags_from_note(self, *args) -> None:
@@ -262,7 +303,9 @@ class DefaultCommandHandler(BaseCommandHandler):
     
     def _exit_bot(self) -> None:
         """Exit the bot and save your data."""
-        print("Goodbye!")
+        print("Saving the state...")
+        self.bot._save_handler(self.bot)
+        print("Done! Goodbye!")
         sys.exit(0)
 
     def _find_contact(self) -> None:
@@ -281,6 +324,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         order = self.bot.prmt_session.prompt("Enter order (asc/desc): ", default="asc")
         if result := self.bot.note_book.search(by_field, value, by_field, order):
             _pprint_notes(result)
+            return
         print(f"No notes found with {by_field} {value}.")
 
 
@@ -350,4 +394,4 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _hello_bot(self) -> None:
         """Greet the bot."""
-        print("How can I help you?")
+        print("How can I help you? Use 'help' command to see available commands.")
