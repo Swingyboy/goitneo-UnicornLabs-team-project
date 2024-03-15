@@ -7,17 +7,29 @@ from console_bot.book_items import Record, Note
 from handler_exceptions import BaseHandlerException, CommandException
 from handler_decorators import apply_decorator_to_class_methods, check_command_args, error_handler
 from print_utils import _pprint_notes, _pprint_records, _print_birthdays, _print_help
-
+from collections import namedtuple
 
 from prompt_toolkit.shortcuts import prompt
 from fields import PhoneValidator, EmailValidator, DateValidator
-
+from prompt_toolkit.completion import WordCompleter
 
 @apply_decorator_to_class_methods(error_handler)
 class DefaultCommandHandler(BaseCommandHandler):
     def __init__(self, bot: "ConsoleBot") -> None:
         super().__init__(bot)
         self.bot: "ConsoleBot" = bot
+
+        self.cmd_phone = "phone"
+        self.cmd_email = "email"
+        self.cmd_birthday = "birthday"
+        self.cmd_address = "address"
+        self.cmd_name = "name"
+
+        self.validators = {
+            self.cmd_phone : PhoneValidator(),
+            self.cmd_email: EmailValidator(),
+            self.cmd_birthday: DateValidator(),
+        }
 
     @check_command_args
     def _add(self, command, *args) -> None:
@@ -46,15 +58,15 @@ class DefaultCommandHandler(BaseCommandHandler):
                 self._hello_bot()
         else:
             record = Record(name)
-            phone = prompt("Enter phone: ", validator=PhoneValidator())
+            phone = prompt("Enter phone: ", validator=self.validators[self.cmd_phone])
             record.add_phone(phone)
-            email = prompt("Enter email: ", validator=EmailValidator())
+            email = prompt("Enter email: ", validator=self.validators[self.cmd_email])
             if email:
                 record.add_email(email)
             address = self.bot.prmt_session.prompt("Enter address: ")
             if address:
                 record.add_address(address)    
-            birthday = prompt("Enter birthday[DD.MM.YYYY]: ", validator= DateValidator(), validate_while_typing=False)
+            birthday = prompt("Enter birthday[DD.MM.YYYY]: ", validator=self.validators[self.cmd_birthday], validate_while_typing=False)
             if birthday:
                 record.add_birthday(birthday)
             self.bot.address_book.add_record(record)
@@ -84,27 +96,30 @@ class DefaultCommandHandler(BaseCommandHandler):
             return
         else:
             print(f"Adding tags to note {note_index + 1} was failed.")
-    
+            
     def _change_contact(self, name: Optional[str] = None) -> None:
         """Update contact data."""
         if not name:
             # список всех контактов
-            contacts = self.bot.address_book.get_all_records()
-            if not contacts:
+            contact_names = self.get_all_contact_names()
+            if not contact_names:
                 print("The book is empty.")
                 return
-            # список контактов для редактирования
-            contacts_name = [contact.name.value for contact in contacts]
             # список с возможностью выбора
             print("Select contact to edit:")
             for index, name in enumerate(contacts_name):
                 print(f"{index + 1}. {name}")
             # пока не введется корректный индекс
+            names_completer = WordCompleter(contact_names)
             while True:
                 # индекс выбранного контакта
-                index = self.bot.prmt_session.prompt("Enter contact number: ")
-                if index.isdigit() and 1 <= int(index) <= len(contacts_name):
-                    index = int(index)
+                inputed = prompt("Enter contact number or name: ", completer=names_completer)
+                index=0
+                if inputed.isdigit() and 1 <= int(inputed) <= len(contact_names):
+                    index = int(inputed)
+                    break
+                elif inputed in contact_names:
+                    index=contact_names.index(inputed)+1
                     break
                 else:
                     print("Invalid input. Please enter a valid contact number.")
@@ -114,18 +129,18 @@ class DefaultCommandHandler(BaseCommandHandler):
         # запись выбранного контакта
         selected_contact = self.bot.address_book.find(name)
         if selected_contact:
+            update_func = {
+                self.cmd_phone: selected_contact.update_phone,
+                self.cmd_email: selected_contact.update_email,
+                self.cmd_address: selected_contact.update_address,
+                self.cmd_birthday: selected_contact.update_birthday,
+                self.cmd_name: selected_contact.update_name
+            }
             while True:
                 # список полей контакта для редактирования
                 print("Select field to edit:")
                 for index, field in enumerate(selected_contact.to_dict().keys()):
                     print(f"{index + 1}. {field}")
-                update_func = {
-                    "phone": selected_contact.update_phone,
-                    "email": selected_contact.update_email,
-                    "address": selected_contact.update_address,
-                    "birthday": selected_contact.update_birthday,
-                    "name": selected_contact.update_name
-                }
                 # поле для редактирования
                 field_index = self.bot.prmt_session.prompt("Enter field number: ")
                 if field_index.isdigit():
@@ -134,10 +149,10 @@ class DefaultCommandHandler(BaseCommandHandler):
                     if 1 <= field_index <= len(selected_contact.to_dict().keys()):
                         field_name = list(selected_contact.to_dict().keys())[field_index - 1]
                         # новое значение для выбранного поля
-                        new_value = self.bot.prmt_session.prompt(f"Enter new {field_name}: ")
-                        # Обновление поля
+                        old_value = selected_contact.to_dict().get(field_name)
+                        new_value = prompt(f"Enter new {field_name}: ", default=old_value, validator=self.validators.get(field_name))
                         update_func[field_name](new_value)
-                        print(f"Field {field_name} for contact {name} was updated.")
+                        print(f"Field '{field_name}' for contact '{name.capitalize()}' was updated from '{old_value}' to '{new_value}'")
                         # обновить другие поля
                         resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
                         if resp.lower() in ["no", "n"]:
@@ -150,6 +165,13 @@ class DefaultCommandHandler(BaseCommandHandler):
                 print(f"Contact {name} was updated.")
         else:
             print(f"Contact {name} does not exist.")
+
+    def get_all_contact_names(self):
+        contacts = self.bot.address_book.get_all_records()
+        if not contacts:
+            return []
+
+        return [contact.name.value for contact in contacts]
 
     def _change_note(self, index:int = None) -> None:
         """Change the text of a note."""
@@ -240,13 +262,19 @@ class DefaultCommandHandler(BaseCommandHandler):
         
     def _delete_contact(self, name: str = None) -> None:
         """Delete a contact from the address book."""
+        contact_names = self.get_all_contact_names()
+        if not contact_names:
+            print("The book is empty.")
+            return
+        names_completer = WordCompleter(contact_names)
+
         if not name:
-            name = self.bot.prmt_session.prompt("Enter the name of the contact you want to delete: ")
+            name = prompt("Enter the name of the contact you want to delete: ", completer=names_completer)
         result: bool = self.bot.address_book.delete_record(name)
         if result:
-            print(f"Contact {name.capitalize()} has been deleted.")
-            return
-        print(f"Contact {name.capitalize()} does not exist.")
+            print(f"Contact {name} has been deleted.")
+        else:
+            print(f"Contact {name} does not exist.")
 
     def _delete_note(self, index: int = None) -> None:
         """Delete a note from the notebook."""

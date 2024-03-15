@@ -81,6 +81,8 @@ class EmailValidator(Validator):
         if not isinstance(data, str):
             text = data.text
 
+        if text == "":
+            return
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if re.match(pattern, text) is None:
             raise ValidationError(message='Invalid email format')
@@ -90,6 +92,9 @@ class DateValidator(Validator):
         text = data
         if not isinstance(data, str):
             text = data.text
+
+        if text == "":
+            return
 
         pattern = r'^\d{2}\.\d{2}\.\d{4}$'
         if re.match(pattern, text) is None:
