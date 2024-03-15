@@ -29,7 +29,7 @@ class ConsoleBot:
         """The main event loop for the bot."""
         self.commands["help"]()
         while True:
-            user_input = prompt(" > Enter a command: ", style=green_style).strip().lower()
+            user_input = prompt(" > Enter a command: ", style=green_style).strip()
             command, *args = _parse_input(user_input)
             result = self.commands[command](*args)
             if result:
