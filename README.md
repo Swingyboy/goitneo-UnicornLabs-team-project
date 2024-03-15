@@ -54,7 +54,7 @@ After stopping bot saves its current state to your home directory in the `.Conso
 
 Here is a demo of the bot in action:
 
-[![Console Bot DEMO](./demo_videos/demo.png)](./demo_videos/demo.cast)
+[![Console Bot DEMO](demo_files/demo.png)](https://asciinema.org/a/qHA9dxMY9TO4Q3TvNI0BpuYXA)
 
 
  
