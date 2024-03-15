@@ -66,10 +66,11 @@ class Note:
         else:
             self.text = None
 
-    def update_tags(self, tags) -> None:
+    def update_tags(self, tags: str) -> None:
         """Update the tags of the note."""
         if tags:
-            self.tags = [Tag(tag) for tag in tags]
+            tags = tags.split(",")
+            self.tags = [Tag(tag.strip()) for tag in tags]
         else:
             self.tags = []
 
