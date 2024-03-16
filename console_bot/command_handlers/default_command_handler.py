@@ -35,7 +35,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @check_command_args
     def _add(self, command, *args) -> None:
-        """Add a new contact or note. Format 'add [contact/note]'."""
+        """\033[3m[contact/note/tags]\033[0m Add a new contact, note or tags to note."""
         if command == "contact":
             name = " ".join(args)
             self._add_contact(name)
@@ -160,13 +160,6 @@ class DefaultCommandHandler(BaseCommandHandler):
         else:
             print(f"Contact {name} does not exist.")
 
-    def get_all_contact_names(self):
-        contacts = self.bot.address_book.get_all_records()
-        if not contacts:
-            return []
-
-        return [contact.name.value for contact in contacts]
-
     def _change_note(self, index:int = None) -> None:
         """Change the text of a note."""
         if not index:
@@ -240,7 +233,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         
     @check_command_args    
     def _delete(self, command, *args) -> None:
-        """Delete/remove an item from the address book or notebook. Format 'remove/delete [contact/note]"""
+        """\033[3m[contact/note]\033[0m Delete/remove an item from the address book or notebook. Format 'remove/delete [contact/note]"""
         if command == "contact":
             name = " ".join(args)
             self._delete_contact(name)
@@ -317,10 +310,9 @@ class DefaultCommandHandler(BaseCommandHandler):
             return
         print(f"No notes found with {by_field} {value}.")
 
-
     @check_command_args  
     def _get(self, command, *args) -> None:
-        """Get an item from the address book or notebook."""
+        """\033[3m[contact/note]\033[0m Get an item from the address book or notebook."""
         if command == "contact":
             self._find_contact()
         elif command == "note":
@@ -328,7 +320,7 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     @check_command_args  
     def _get_all(self, command, *args) -> None:
-        """Show all items in the address book or notebook."""
+        """\033[3m[contacts/notes/birthdays]\033[0m Show all items in the address book or notebook, or show all birthdayns in N days (defult 7)."""
         if command == "contacts":
             self._get_contacts()
         elif command == "notes":
@@ -377,7 +369,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         
     @check_command_args  
     def _update(self, command, *args) -> None:
-        """Update an item in the address book or notebook. Format 'edit [contact/note]"""
+        """\033[3m[contact/note]\033[0m Update an item in the address book or notebook. Format 'edit [contact/note]"""
         if command == "contact":
             self._change_contact(*args)
         elif command == "note":
@@ -386,3 +378,10 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _hello_bot(self) -> None:
         """Greet the bot."""
         print("How can I help you? Use 'help' command to see available commands.")
+
+    def get_all_contact_names(self):
+        contacts = self.bot.address_book.get_all_records()
+        if not contacts:
+            return []
+
+        return [contact.name.value for contact in contacts]
