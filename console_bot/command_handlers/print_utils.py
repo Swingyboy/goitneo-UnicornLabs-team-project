@@ -79,20 +79,21 @@ def _print_birthdays(records: dict):
     print(table)
 
 
-def _print_help(handler: "BaseCommandHandler"):
+def _print_help(handler: "BaseCommandHandler", print_title: bool = False):
     """Print the help message."""
-    print('''
-                                 _         _             _   
-                                | |       | |           | |  
-   ___  ___   _ __   ___   ___  | |  ___  | |__    ___  | |_ 
-  / __|/ _ \\ | '_ \\ / __| / _ \\ | | / _ \\ | '_ \\  / _ \\ | __|
- | (__| (_) || | | |\\__ \\| (_) || ||  __/ | |_) || (_) || |_ 
-  \___|\\___/ |_| |_||___/ \___/ |_| \___| |_.__/  \___/  \__|
-                                      ______                 
-                                     |______|     
-                                    
-Made by UnicornLabs                                   
-''')
+    if print_title:
+        print('''
+                                   _         _             _   
+                                  | |       | |           | |  
+     ___  ___   _ __   ___   ___  | |  ___  | |__    ___  | |_ 
+    / __|/ _ \\ | '_ \\ / __| / _ \\ | | / _ \\ | '_ \\  / _ \\ | __| 
+   | (__| (_) || | | |\\__ \\| (_) || ||  __/ | |_) || (_) || |_ 
+    \___|\\___/ |_| |_||___/ \___/ |_| \___| |_.__/  \___/  \__|
+                                         ______                 
+                                        |______|     
+                                        
+    Made by UnicornLabs                                   
+    ''')
 
 
     print("Available commands:")
