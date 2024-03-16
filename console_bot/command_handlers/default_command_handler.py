@@ -89,7 +89,10 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _add_tags_to_note(self, *tags) -> None:
         """Add tags to a note by index."""
         note_index = self.bot.prmt_session.prompt("Enter note index to witch you want to add tags: ")
-        note_index = int(note_index) - 1  # Note count starts from 1
+        try:
+            note_index = int(note_index) - 1  # Note count starts from 1
+        except ValueError:
+            raise CommandException(f"Invalid note index {note_index}.")
         tags = list(tags)
         if self.bot.note_book.add_tags_to_note(note_index, tags):
             print(f"Tags {tags} have been added to note {note_index + 1}.")
