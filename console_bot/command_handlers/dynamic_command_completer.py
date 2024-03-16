@@ -12,6 +12,10 @@ commands = {
         "note": ["tag"],
     },
     "get-all": ["contacts", "notes", "birthdays"],
+    "exit": [],
+    "close": [],
+    "help": [],
+    "hello": [],
 }
 
 
