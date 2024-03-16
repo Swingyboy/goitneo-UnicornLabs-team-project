@@ -13,6 +13,12 @@ from prompt_toolkit.shortcuts import prompt
 from fields import PhoneValidator, EmailValidator, DateValidator
 from prompt_toolkit.completion import WordCompleter
 
+
+GREEN_COLOR = "\033[92m"
+RED_COLOR = "\033[91m"
+WHITE_COLOR = "\033[97m"
+
+
 @apply_decorator_to_class_methods(error_handler)
 class DefaultCommandHandler(BaseCommandHandler):
     def __init__(self, bot: "ConsoleBot") -> None:
@@ -53,7 +59,7 @@ class DefaultCommandHandler(BaseCommandHandler):
                 try:
                     self._change_contact(record.name.value)
                 except AttributeError:
-                    raise BaseHandlerException(f"Contact name is incorrect: {record}.")
+                    raise BaseHandlerException(RED_COLOR + f"Contact name is incorrect: {record}." + WHITE_COLOR)
             else:
                 self._hello_bot()
         else:
@@ -70,7 +76,7 @@ class DefaultCommandHandler(BaseCommandHandler):
             if birthday:
                 record.add_birthday(birthday)
             self.bot.address_book.add_record(record)
-            print(f"Contact {name.capitalize()} has been added.")
+            print(GREEN_COLOR + f"Contact {name} has been added." + WHITE_COLOR)
 
     def _add_note(self, summary: str = None) -> None:
         """Add a new note to the notebook."""
@@ -84,7 +90,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         else:
             tags = None
         self.bot.note_book.add_note(summary=summary, text=text, tags=tags)
-        print("Note has been added.")
+        print(GREEN_COLOR + "Note has been added." + WHITE_COLOR)
 
     def _add_tags_to_note(self, *tags) -> None:
         """Add tags to a note by index."""
@@ -92,10 +98,10 @@ class DefaultCommandHandler(BaseCommandHandler):
         note_index = int(note_index) - 1  # Note count starts from 1
         tags = list(tags)
         if self.bot.note_book.add_tags_to_note(note_index, tags):
-            print(f"Tags {tags} have been added to note {note_index + 1}.")
+            print(GREEN_COLOR + f"Tags {tags} have been added to note {note_index + 1}." + WHITE_COLOR)
             return
         else:
-            print(f"Adding tags to note {note_index + 1} was failed.")
+            print(RED_COLOR + f"Adding tags to note {note_index + 1} was failed." + WHITE_COLOR)
             
     def _change_contact(self, name: Optional[str] = None) -> None:
         """Update contact data."""
@@ -152,7 +158,7 @@ class DefaultCommandHandler(BaseCommandHandler):
                         old_value = selected_contact.to_dict().get(field_name)
                         new_value = prompt(f"Enter new {field_name}: ", default=old_value, validator=self.validators.get(field_name))
                         update_func[field_name](new_value)
-                        print(f"Field '{field_name}' for contact '{name.capitalize()}' was updated from '{old_value}' to '{new_value}'")
+                        print(GREEN_COLOR + f"Field '{field_name}' for contact '{name}' was updated from '{old_value}' to '{new_value}'" + WHITE_COLOR)
                         # обновить другие поля
                         resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
                         if resp.lower() in ["no", "n"]:
@@ -160,11 +166,11 @@ class DefaultCommandHandler(BaseCommandHandler):
                         else:
                             continue
                 else:
-                    print("Invalid input. Please enter a valid field number.")
+                    print(RED_COLOR + "Invalid input. Please enter a valid field number." + WHITE_COLOR)
                     continue
-                print(f"Contact {name} was updated.")
+                print(GREEN_COLOR + f"Contact {name} was updated." + WHITE_COLOR)
         else:
-            print(f"Contact {name} does not exist.")
+            print(RED_COLOR + f"Contact {name} does not exist." + WHITE_COLOR)
 
     def get_all_contact_names(self):
         contacts = self.bot.address_book.get_all_records()
@@ -193,7 +199,7 @@ class DefaultCommandHandler(BaseCommandHandler):
                     index = int(index)
                     break
                 else:
-                    print("Invalid input. Please enter a valid note number.")
+                    print(RED_COLOR + "Invalid input. Please enter a valid note number." + WHITE_COLOR)
             name = name_notes[int(index) - 1]
             
             selected_note = self.bot.note_book.find(name)
@@ -226,21 +232,21 @@ class DefaultCommandHandler(BaseCommandHandler):
                     new_value = self.bot.prmt_session.prompt(f"Enter new {field_name}: ", default=old_value)
                     # поле записи
                     update_func[field_name](new_value)
-                    print(f"Field {field_name} for note '{name}' was updated.")
+                    print(GREEN_COLOR + f"Field {field_name} for note '{name}' was updated." + WHITE_COLOR)
                     # желание обновить другие поля
                     resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
                     if resp.lower() in ["no", "n"]:
                         break
             else:
-                print("Invalid input. Please enter a valid field number.")
+                print(RED_COLOR + "Invalid input. Please enter a valid field number." + WHITE_COLOR)
 
-        print(f"Note '{name}' was updated.")
+        print(GREEN_COLOR + f"Note '{name}' was updated." + WHITE_COLOR)
 
     def _check_contact_exist(self, name: str) -> Optional[Record]:
         """Check if the contact exists in the address book."""
         record: Optional["Record"] = self.bot.address_book.find(name)
         if not record:
-            print(f"Contact {name.capitalize()} does not exist.")
+            print(RED_COLOR + f"Contact {name} does not exist." + WHITE_COLOR)
         else:
             return record
         
@@ -276,9 +282,9 @@ class DefaultCommandHandler(BaseCommandHandler):
             name = prompt("Enter the name of the contact you want to delete: ", completer=names_completer)
         result: bool = self.bot.address_book.delete_record(name)
         if result:
-            print(f"Contact {name} has been deleted.")
+            print(GREEN_COLOR + f"Contact {name} has been deleted." + WHITE_COLOR)
         else:
-            print(f"Contact {name} does not exist.")
+            print(RED_COLOR + f"Contact {name} does not exist." + WHITE_COLOR)
 
     def _delete_note(self, index: int = None) -> None:
         """Delete a note from the notebook."""
@@ -289,9 +295,9 @@ class DefaultCommandHandler(BaseCommandHandler):
         except ValueError:
             raise BaseCommandHandler(f"Invalid index {index}. Index should be a number, current index is {index}.")
         if self.bot.note_book.delete_note(index):
-            print(f"Note {index} has been deleted.")
+            print(GREEN_COLOR + f"Note {index} has been deleted." + WHITE_COLOR)
             return
-        print(f"Note {index} does not exist.")
+        print(RED_COLOR + f"Note {index} does not exist." + WHITE_COLOR)
 
     def _delete_tags_from_note(self, *args) -> None:
         """Delete tags from a note by index."""
@@ -301,9 +307,9 @@ class DefaultCommandHandler(BaseCommandHandler):
             raise CommandException("Invalid number of arguments for delete-tags command, please try again.")
         note_index = int(note_index) - 1  # Note count starts from 1
         if self.bot.note_book.delete_tags_from_note(note_index, *tags):
-            print(f"Tags {tags} have been deleted from note {note_index + 1}.")
+            print(GREEN_COLOR + f"Tags {tags} have been deleted from note {note_index + 1}." + WHITE_COLOR)
         else:
-            print(f"Deleting tags from note {note_index + 1} was failed.")
+            print(GREEN_COLOR + f"Deleting tags from note {note_index + 1} was failed." + WHITE_COLOR)
     
     def _exit_bot(self) -> None:
         """Exit the bot and save your data."""
@@ -319,7 +325,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         if result := self.bot.address_book.search(by_field.lower(), value):
             _pprint_records(result)
             return
-        print(f"No contacts found with {by_field} {value}.")
+        print(RED_COLOR + f"No contacts found with {by_field} {value}." + WHITE_COLOR)
 
     def _find_note(self) -> None:
         """Find a note by a given field and value."""
@@ -329,7 +335,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         if result := self.bot.note_book.search(by_field, value, by_field, order):
             _pprint_notes(result)
             return
-        print(f"No notes found with {by_field} {value}.")
+        print(RED_COLOR + f"No notes found with {by_field} {value}." + WHITE_COLOR)
 
 
     @check_command_args  
@@ -350,13 +356,13 @@ class DefaultCommandHandler(BaseCommandHandler):
         elif command == "birthdays":
             self._get_birthdays_from_date(*args)
         else:
-            print("Invalid command, please try again.")
+            print(RED_COLOR + "Invalid command, please try again." + WHITE_COLOR)
     
     def _get_contacts(self) -> None:
         """Show all book_items in the address book."""
         records = self.bot.address_book.get_all_records()
         if not records:
-            print("The address book is empty.")
+            print(RED_COLOR + "The address book is empty." + WHITE_COLOR)
         _pprint_records(records)
 
     def _get_birthdays_from_date(self, *args) -> None:
@@ -381,12 +387,12 @@ class DefaultCommandHandler(BaseCommandHandler):
         else:
             notes = self.bot.note_book.get_all_notes()
         if not notes:
-            print("The notebook is empty.")
+            print(RED_COLOR + "The notebook is empty." + WHITE_COLOR)
         _pprint_notes(notes)
 
-    def _get_help(self) -> None:
+    def _get_help(self, print_starting: bool = False, *args) -> None:
         """Show supported commands."""
-        _print_help(self)
+        _print_help(self, print_title=print_starting)
         
     @check_command_args  
     def _update(self, command, *args) -> None:
