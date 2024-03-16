@@ -12,6 +12,8 @@ from collections import namedtuple
 from prompt_toolkit.shortcuts import prompt
 from fields import PhoneValidator, EmailValidator, DateValidator
 from prompt_toolkit.completion import WordCompleter
+from command_handlers.dynamic_command_completer import FieldCompleter
+
 
 
 GREEN_COLOR = "\033[92m"
@@ -95,7 +97,10 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _add_tags_to_note(self, *tags) -> None:
         """Add tags to a note by index."""
         note_index = self.bot.prmt_session.prompt("Enter note index to witch you want to add tags: ")
-        note_index = int(note_index) - 1  # Note count starts from 1
+        try:
+            note_index = int(note_index) - 1  # Note count starts from 1
+        except ValueError:
+            raise CommandException(f"Invalid note index {note_index}.")
         tags = list(tags)
         if self.bot.note_book.add_tags_to_note(note_index, tags):
             print(GREEN_COLOR + f"Tags {tags} have been added to note {note_index + 1}." + WHITE_COLOR)
@@ -106,19 +111,15 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _change_contact(self, name: Optional[str] = None) -> None:
         """Update contact data."""
         if not name:
-            # список всех контактов
             contact_names = self.get_all_contact_names()
             if not contact_names:
                 print("The book is empty.")
                 return
-            # список с возможностью выбора
             print("Select contact to edit:")
             for index, name in enumerate(contact_names):
                 print(f"{index + 1}. {name}")
-            # пока не введется корректный индекс
             names_completer = WordCompleter(contact_names)
             while True:
-                # индекс выбранного контакта
                 inputed = prompt("Enter contact number or name: ", completer=names_completer)
                 index=0
                 if inputed.isdigit() and 1 <= int(inputed) <= len(contact_names):
@@ -129,10 +130,8 @@ class DefaultCommandHandler(BaseCommandHandler):
                     break
                 else:
                     print("Invalid input. Please enter a valid contact number.")
-            # имя выбранного контакта
             name = contact_names[int(index) - 1]
             print(f"Selected contact: {name}")
-        # запись выбранного контакта
         selected_contact = self.bot.address_book.find(name)
         if selected_contact:
             update_func = {
@@ -143,18 +142,14 @@ class DefaultCommandHandler(BaseCommandHandler):
                 self.cmd_name: selected_contact.update_name
             }
             while True:
-                # список полей контакта для редактирования
                 print("Select field to edit:")
                 for index, field in enumerate(selected_contact.to_dict().keys()):
                     print(f"{index + 1}. {field}")
-                # поле для редактирования
                 field_index = self.bot.prmt_session.prompt("Enter field number: ")
                 if field_index.isdigit():
                     field_index = int(field_index)
-                    # является ли ввод числом и корректным индексом
                     if 1 <= field_index <= len(selected_contact.to_dict().keys()):
                         field_name = list(selected_contact.to_dict().keys())[field_index - 1]
-                        # новое значение для выбранного поля
                         old_value = selected_contact.to_dict().get(field_name)
                         new_value = prompt(f"Enter new {field_name}: ", default=old_value, validator=self.validators.get(field_name))
                         update_func[field_name](new_value)
@@ -182,19 +177,15 @@ class DefaultCommandHandler(BaseCommandHandler):
     def _change_note(self, index:int = None) -> None:
         """Change the text of a note."""
         if not index:
-            # список всех notes из noteBook
             notes = self.bot.note_book.get_all_notes()
             if not notes:
                 return "The book is empty."     
-            # список для редактирования
             name_notes = [note.summary.value for note in notes]
-            # возможность выбора
             print("Select notes to edit:")
             for index, name in enumerate(name_notes):
                 print(f"{index + 1}. {name}")
             while True:
                 index = self.bot.prmt_session.prompt("Enter notes number: ")
-                # является ли ввод числом и корректным индексом
                 if index.isdigit() and 1 <= int(index) <= len(name_notes):
                     index = int(index)
                     break
@@ -208,29 +199,24 @@ class DefaultCommandHandler(BaseCommandHandler):
            name = selected_note.summary.value
 
         print(f"Selected note: {name}")
-        # список полей для редактирования
         print("Select field to edit:")
         for index, field in enumerate(selected_note.to_dict().keys()):
             print(f"{index + 1}. {field}")
-        # функции для обновления каждого поля
         update_func = {
             "summary": selected_note.update_summary,
             "text": selected_note.update_text,
             "tags": selected_note.update_tags
             }
         while True:
-            # выбранное поле для редактирования
             field_index = self.bot.prmt_session.prompt("Enter field number: ")
             if field_index.isdigit():
                 field_index = int(field_index)
                 if 1 <= field_index <= len(selected_note.to_dict().keys()):
                     field_name = list(selected_note.to_dict().keys())[field_index - 1]
-                    # новое значение для выбранного поля
                     old_value = selected_note.to_dict().get(field_name)
                     if isinstance(old_value, list):
                         old_value = ", ".join(old_value)
                     new_value = self.bot.prmt_session.prompt(f"Enter new {field_name}: ", default=old_value)
-                    # поле записи
                     update_func[field_name](new_value)
                     print(GREEN_COLOR + f"Field {field_name} for note '{name}' was updated." + WHITE_COLOR)
                     # желание обновить другие поля
@@ -320,8 +306,9 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _find_contact(self) -> None:
         """Find a contact by a given field and value."""
-        by_field = self.bot.prmt_session.prompt("Enter field to search by: ")
-        value = self.bot.prmt_session.prompt(f"Enter expected {by_field} value: ")
+        field_completer = FieldCompleter('search', 'contact')
+        by_field = self.bot.prmt_session.prompt("Enter field to search by: ", complete_while_typing=True, completer=field_completer)
+        value = self.bot.prmt_session.prompt(f"Enter expected {by_field} value: ", complete_while_typing=False)
         if result := self.bot.address_book.search(by_field.lower(), value):
             _pprint_records(result)
             return
@@ -329,8 +316,9 @@ class DefaultCommandHandler(BaseCommandHandler):
 
     def _find_note(self) -> None:
         """Find a note by a given field and value."""
-        by_field = self.bot.prmt_session.prompt("Enter field to search by: ")
-        value = self.bot.prmt_session.prompt(f"Enter expected {by_field} value: ")
+        field_completer = FieldCompleter('search', 'note')
+        by_field = self.bot.prmt_session.prompt("Enter field to search by: ", complete_while_typing=True, completer=field_completer)
+        value = self.bot.prmt_session.prompt(f"Enter expected {by_field} value: ", complete_while_typing=False)
         order = self.bot.prmt_session.prompt("Enter order (asc/desc): ", default="asc")
         if result := self.bot.note_book.search(by_field, value, by_field, order):
             _pprint_notes(result)
@@ -381,8 +369,9 @@ class DefaultCommandHandler(BaseCommandHandler):
         """Show all notes in the notebook."""
         apply_sort = self.bot.prmt_session.prompt("Do you want to sort the notes? ", default="no")
         if apply_sort.lower() in ["yes", "y"]:
-            sort_by = self.bot.prmt_session.prompt("Enter sort attribute (index/text/tag): ")
-            order = self.bot.prmt_session.prompt("Enter order (asc/desc): ", default="asc")
+            field_completer = FieldCompleter(custom_command_list=['index', 'text', 'tag'])
+            sort_by = self.bot.prmt_session.prompt("Enter sort attribute (index/text/tag): ", complete_while_typing=True, completer=field_completer)
+            order = self.bot.prmt_session.prompt("Enter order (asc/desc): ", default="asc", complete_while_typing=False)
             notes = self.bot.note_book.get_all_notes(sort_by, order)
         else:
             notes = self.bot.note_book.get_all_notes()
