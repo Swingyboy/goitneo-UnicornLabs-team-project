@@ -93,7 +93,9 @@ class AddressBook(UserDict):
 
     def search(self, by_field: str, value: str) -> List[Record]:
         """Search for a record in the address book."""
-        return [record for record in self.data.values() if value.lower() in getattr(record, by_field).value.lower()]
+        if not value:
+            return self.get_all_records()
+        return [record for record in self.data.values() if getattr(record, by_field) and value.lower() in getattr(record, by_field).value.lower()]
 
     def _get_users_birthday_in_current_year(self, data: Dict[str, Any]) -> List[Dict[str, Union[str, datetime]]]:
         """Return the list of users with their birthday in the current year."""
