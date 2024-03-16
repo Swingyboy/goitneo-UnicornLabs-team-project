@@ -5,6 +5,8 @@ from prompt_toolkit.shortcuts import prompt
 from bot_memory import recall_bot_state, save_bot_state
 from utils import _find_best_match, _parse_input
 from prompt_toolkit.styles import Style
+from command_handlers.dynamic_command_completer import DynamicCommandCompleter
+
 
 our_style = Style.from_dict({
     '': 'yellow',
@@ -34,7 +36,7 @@ class ConsoleBot:
         """The main event loop for the bot."""
         self.commands["help"]()
         while True:
-            user_input = prompt(message, style=our_style).strip().lower()
+            user_input = prompt(message, style=our_style, completer=DynamicCommandCompleter()).strip().lower()
             command, *args = _parse_input(user_input)
             result = self.commands[command](*args)
             if result:

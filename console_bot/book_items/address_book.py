@@ -78,7 +78,7 @@ class AddressBook(UserDict):
         sorted_days = sorted(users_with_day_this_week.keys(), key=lambda x: list(day_name).index(x))
 
         if not sorted_days:
-            print("No birthdays this week.")
+            print(f"There are no birthdays in the next {num_of_days} days.")
             return
 
 
