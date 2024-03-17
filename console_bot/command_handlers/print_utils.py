@@ -92,7 +92,8 @@ def _print_help(handler: "BaseCommandHandler", print_title: bool = False):
                                          ______                 
                                         |______|     
                                         
-    Made by UnicornLabs                                   
+    Made by UnicornLabs
+    Version: 1.0.0                                   
     ''')
 
 
