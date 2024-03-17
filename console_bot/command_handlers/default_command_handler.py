@@ -132,7 +132,7 @@ class DefaultCommandHandler(BaseCommandHandler):
                     print("Invalid input. Please enter a valid contact number.")
             name = contact_names[int(index) - 1]
             print(f"Selected contact: {name}")
-        selected_contact = self.bot.address_book.find(name)
+        selected_contact = self.prepare_selected_contact(name)
         if selected_contact:
             update_func = {
                 self.cmd_phone: selected_contact.update_phone,
@@ -393,3 +393,14 @@ class DefaultCommandHandler(BaseCommandHandler):
             return []
 
         return [contact.name.value for contact in contacts]
+    
+    def prepare_selected_contact(self, name: str):
+        ''''Preparing the selected contact'''
+        selected_contact = None
+        contacts = self.bot.address_book.get_all_records()
+        for record in contacts:
+            input_name = record.name.value
+            if input_name == name:
+                selected_contact = record
+                break
+        return selected_contact
