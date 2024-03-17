@@ -12,5 +12,10 @@ setup(name='console_bot',
           'prettytable==3.10.0',
           'wcwidth==0.2.13',
           'prompt-toolkit==3.0.43'
-      ]
+      ],
+      entry_points={
+          'console_scripts': [
+              'console_bot = main:main'
+              ]
+          }
 )
