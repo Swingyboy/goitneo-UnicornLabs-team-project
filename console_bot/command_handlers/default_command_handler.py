@@ -152,7 +152,7 @@ class DefaultCommandHandler(BaseCommandHandler):
                         old_value = selected_contact.to_dict().get(field_name)
                         new_value = prompt(f"Enter new {field_name}: ", default=old_value, validator=self.validators.get(field_name))
                         update_func[field_name](new_value)
-                        print(f"Field '{field_name}' for contact '{name.capitalize()}' was updated from '{old_value}' to '{new_value}'")
+                        print(f"Field '{field_name}' for contact '{name}' was updated from '{old_value}' to '{new_value}'")
                         # обновить другие поля
                         resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
                         if resp.lower() in ["no", "n"]:
