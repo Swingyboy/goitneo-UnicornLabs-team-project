@@ -241,7 +241,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         
     @check_command_args    
     def _delete(self, command, *args) -> None:
-        """\033[3m[contact/note]\033[0m Delete/remove an item from the address book or notebook. Format 'remove/delete [contact/note]"""
+        """\033[3m[contact/note]\033[0m Delete/remove an item from the address book or notebook."""
         if command == "contact":
             name = " ".join(args)
             self._delete_contact(name)
@@ -377,7 +377,7 @@ class DefaultCommandHandler(BaseCommandHandler):
         
     @check_command_args  
     def _update(self, command, *args) -> None:
-        """\033[3m[contact/note]\033[0m Update an item in the address book or notebook. Format 'edit [contact/note]"""
+        """\033[3m[contact/note]\033[0m Update an item in the address book or notebook."""
         if command == "contact":
             self._change_contact(*args)
         elif command == "note":
