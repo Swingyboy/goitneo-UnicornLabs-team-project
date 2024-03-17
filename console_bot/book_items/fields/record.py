@@ -10,9 +10,11 @@ class Record:
                  address: str = None,
                  phone: str = None,
                  birthday: str = None,
-                 email: str = None
+                 email: str = None,
+                 on_name_change: Optional[callable] = None
                  ) -> None:
-        self.name: Name = Name(name)
+        self._name: Name = Name(name)
+        self._on_name_change = on_name_change
         self.phone: Optional[Phone] = Phone(phone) if phone else None
         self.birthday: Optional[Birthday] = Birthday(birthday) if birthday else None
         self.email: Optional[Email] = Email(email) if email else None
@@ -42,6 +44,18 @@ class Record:
         if self.phone and self.phone.value == phone:
             return self.phone
         return None
+    
+    @property
+    def name(self) -> Name:
+        """Get the name of the record."""
+        return self._name
+    
+    @name.setter
+    def name(self, new_name: Name) -> None:
+        if new_name.value != self._name.value:
+            if self._on_name_change:
+                self._on_name_change(self._name.value, new_name.value)
+            self._name = new_name
 
     def to_dict(self):
         """Convert the record to a dictionary."""
@@ -110,10 +124,10 @@ class Record:
         return record
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Record":
+    def from_dict(cls, data: dict, name_change_callback: Optional[callable] = None) -> "Record":
         """Create a record from a dictionary."""
         if name := data.get("name"):
-            record = cls(name)
+            record = cls(name, on_name_change=name_change_callback)
         else:
             raise RecordException("Name is required.")
         if birthday := data.get("birthday"):
