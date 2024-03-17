@@ -96,38 +96,30 @@ class DefaultCommandHandler(BaseCommandHandler):
             return
         else:
             print(f"Adding tags to note {note_index + 1} was failed.")
-            
+
+
     def _change_contact(self, name: Optional[str] = None) -> None:
         """Update contact data."""
         if not name:
-            # список всех контактов
-            contact_names = self.get_all_contact_names()
+            # list of all contacts
+            contact_names = self.get_all_contact_names()    
             if not contact_names:
                 print("The book is empty.")
                 return
-            # список с возможностью выбора
-            print("Select contact to edit:")
-            for index, name in enumerate(contact_names):
-                print(f"{index + 1}. {name}")
-            # пока не введется корректный индекс
+            quantity = 3
+            last_number = len(contact_names)
+            if quantity >= last_number and last_number > 1:
+                quantity = last_number - 1
+            print('Names:')   
+            for index, name in enumerate(contact_names[:quantity]):
+                print(name)
+            for _ in range(3):
+                print('...')
+            print(contact_names[-1])
             names_completer = WordCompleter(contact_names)
-            while True:
-                # индекс выбранного контакта
-                inputed = prompt("Enter contact number or name: ", completer=names_completer)
-                index=0
-                if inputed.isdigit() and 1 <= int(inputed) <= len(contact_names):
-                    index = int(inputed)
-                    break
-                elif inputed in contact_names:
-                    index=contact_names.index(inputed)+1
-                    break
-                else:
-                    print("Invalid input. Please enter a valid contact number.")
-            # имя выбранного контакта
-            name = contact_names[int(index) - 1]
-            print(f"Selected contact: {name}")
-        # запись выбранного контакта
-        selected_contact = self.bot.address_book.find(name)
+            name = prompt("Begin typing name here: ", completer=names_completer)
+        # record of the selected contact
+        selected_contact = self.bot.address_book.find(name)    
         if selected_contact:
             update_func = {
                 self.cmd_phone: selected_contact.update_phone,
@@ -137,34 +129,37 @@ class DefaultCommandHandler(BaseCommandHandler):
                 self.cmd_name: selected_contact.update_name
             }
             while True:
-                # список полей контакта для редактирования
-                print("Select field to edit:")
-                for index, field in enumerate(selected_contact.to_dict().keys()):
+                # list of contact fields for editing
+                for index, field in enumerate(selected_contact.to_dict().keys()):    
                     print(f"{index + 1}. {field}")
-                # поле для редактирования
-                field_index = self.bot.prmt_session.prompt("Enter field number: ")
-                if field_index.isdigit():
+                print(f"{len(selected_contact.to_dict().keys()) + 1}. Exit")
+                # edit field
+                field_index = self.bot.prmt_session.prompt("Enter number to data edit or exit: ")             
+                # Check if the user wants to exit
+                if field_index.isdigit():    
                     field_index = int(field_index)
-                    # является ли ввод числом и корректным индексом
-                    if 1 <= field_index <= len(selected_contact.to_dict().keys()):
+                    # check for correctness of input
+                    if 1 <= field_index <= len(selected_contact.to_dict().keys()):    
                         field_name = list(selected_contact.to_dict().keys())[field_index - 1]
-                        # новое значение для выбранного поля
                         old_value = selected_contact.to_dict().get(field_name)
-                        new_value = prompt(f"Enter new {field_name}: ", default=old_value, validator=self.validators.get(field_name))
+                        new_value = prompt(f"Enter new {field_name}: ", default=old_value if old_value is not None else "", validator=self.validators.get(field_name))
                         update_func[field_name](new_value)
                         print(f"Field '{field_name}' for contact '{name.capitalize()}' was updated from '{old_value}' to '{new_value}'")
-                        # обновить другие поля
+                        # update other fields
                         resp = self.bot.prmt_session.prompt("Do you want to update another field? ", default="no")
                         if resp.lower() in ["no", "n"]:
                             break
                         else:
                             continue
+                    elif field_index == len(selected_contact.to_dict().keys()) + 1:
+                        break
                 else:
                     print("Invalid input. Please enter a valid field number.")
                     continue
                 print(f"Contact {name} was updated.")
         else:
             print(f"Contact {name} does not exist.")
+
 
     def get_all_contact_names(self):
         contacts = self.bot.address_book.get_all_records()
