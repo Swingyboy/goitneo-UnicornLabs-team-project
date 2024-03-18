@@ -17,6 +17,7 @@ class AddressBook(UserDict):
     def add_record(self, record: Record) -> None:
         """Add a record to the address book."""
         try:
+            record.name._on_name_change = self._update_self_key
             self.data[record.name.value] = record
         except AttributeError as ex:
             raise AddressBookException(f"Invalid record: {record}")
@@ -54,7 +55,7 @@ class AddressBook(UserDict):
         address_book = cls()
         for record in data:
             try:
-                new_record = Record.from_dict(record)
+                new_record = Record.from_dict(record, name_change_callback=address_book._update_self_key)
             except ValidationError as e:
                 print("Ignored invalid record instorage: ", record, e)
 
@@ -115,3 +116,7 @@ class AddressBook(UserDict):
         delta_days = abs((user.get("birthday") - datetime.today().date()).days)
         if delta_days < from_days:
             return user.get("birthday").strftime("%A")
+        
+    def _update_self_key(self, old_name: str, new_name: str) -> None:
+        """Update the key of the address book."""
+        self.data[new_name] = self.data.pop(old_name)
