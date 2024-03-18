@@ -215,6 +215,8 @@ class DefaultCommandHandler(BaseCommandHandler):
                     old_value = selected_note.to_dict().get(field_name)
                     if isinstance(old_value, list):
                         old_value = ", ".join(old_value)
+                    if not old_value:
+                        old_value = ""
                     new_value = self.bot.prmt_session.prompt(f"Enter new {field_name}: ", default=old_value)
                     update_func[field_name](new_value)
                     print(GREEN_COLOR + f"Field {field_name} for note '{name}' was updated." + WHITE_COLOR)
