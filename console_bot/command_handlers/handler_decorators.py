@@ -2,6 +2,9 @@ from functools import wraps
 
 from handler_exceptions import CommandException
 
+RED_COLOR = "\033[91m"
+WHITE_COLOR = "\033[97m"
+
 
 def error_handler(func):
     """A decorator to handle input errors."""
@@ -10,7 +13,7 @@ def error_handler(func):
         try:
             return func(*args, **kwargs)
         except Exception as ex:
-            print(str(ex))
+            print(RED_COLOR + str(ex) + WHITE_COLOR)
     return inner
 
 
